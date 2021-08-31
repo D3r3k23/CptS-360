@@ -1,0 +1,249 @@
+Derek Henderson
+11537179
+
+Part 1.
+
+A)
+Case | a.out | TEXT | DATA  | BSS
+-----|-------|------|-------|-------
+ 1   | 15k   | 1679 | 304   | 8
+ 2   | 15k   | 1679 | 308   | 4
+ 3   | 15k   | 1679 | 304   | 40032
+ 4   | 55k   | 1679 | 40328 | 4
+ 5   | 15k   | 1927 | 308   | 8
+ 6   | 15k   | 1695 | 304   | 40068 
+ 1.
+DATA: Initialized globals, automatic locals
+BSS: Uninitialized globals, static locals
+
+2.
+Text and data are in a.out, BSS is not because initial values are not required.
+
+B)
+Case | a.out |  TEXT  | DATA  | BSS
+-----|-------|--------|-------|-------
+ 1   | 709k  | 623141 | 11224 | 3408
+ 2   | 709k  | 623141 | 11224 | 3408
+ 3   | 709k  | 623141 | 11224 | 43408
+ 4   | 749k  | 623141 | 51256 | 3408
+ 5   | 709k  | 623205 | 11224 | 3408
+ 6   | 709k  | 623157 | 11224 | 43440
+
+The size of all sections is much greater because stdio.h is linked statically.
+
+Part 2.
+
+enter main
+&argc=0xffb5dea0 argv=0xffb5df34 env=0xffb5df48
+&a=0xffb5de58 &b=0xffb5de5c &c=0xffb5de60
+
+argv[0]=./a.out
+argv[1]=one
+argv[2]=two
+argv[3]=three
+
+env[0]=SHELL=/bin/bash
+env[1]=SESSION_MANAGER=local/DerekLaptop:@/tmp/.ICE-unix/1178,unix/DerekLaptop:/tmp/.ICE-unix/1178
+env[2]=QT_ACCESSIBILITY=1
+env[3]=COLORTERM=truecolor
+env[4]=XDG_CONFIG_DIRS=/etc/xdg/xdg-cinnamon:/etc/xdg
+env[5]=XDG_SESSION_PATH=/org/freedesktop/DisplayManager/Session0
+env[6]=TERM_PROGRAM_VERSION=1.56.1
+env[7]=GNOME_DESKTOP_SESSION_ID=this-is-deprecated
+env[8]=APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL=true
+env[9]=LANGUAGE=en_US
+env[10]=MANDATORY_PATH=/usr/share/gconf/cinnamon.mandatory.path
+env[11]=SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
+env[12]=BREAKPAD_DUMP_LOCATION=/home/derek/.config/Code/exthost Crash Reports
+env[13]=DESKTOP_SESSION=cinnamon
+env[14]=SSH_AGENT_PID=1247
+env[15]=GTK_MODULES=gail:atk-bridge
+env[16]=XDG_SEAT=seat0
+env[17]=PWD=/home/derek/Dev/school/CptS-360/pre1/part2
+env[18]=XDG_SESSION_DESKTOP=cinnamon
+env[19]=LOGNAME=derek
+env[20]=QT_QPA_PLATFORMTHEME=qt5ct
+env[21]=XDG_SESSION_TYPE=x11
+env[22]=GPG_AGENT_INFO=/run/user/1000/gnupg/S.gpg-agent:0:1
+env[23]=XAUTHORITY=/home/derek/.Xauthority
+env[24]=VSCODE_GIT_ASKPASS_NODE=/usr/share/code/code
+env[25]=XDG_GREETER_DATA_DIR=/var/lib/lightdm-data/derek
+env[26]=GDM_LANG=en_US
+env[27]=HOME=/home/derek
+env[28]=LANG=en_US.UTF-8
+env[29]=LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:
+env[30]=XDG_CURRENT_DESKTOP=X-Cinnamon
+env[31]=VTE_VERSION=6003
+env[32]=GIT_ASKPASS=/usr/share/code/resources/app/extensions/git/dist/askpass.sh
+env[33]=XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat0
+env[34]=GNOME_TERMINAL_SCREEN=/org/gnome/Terminal/screen/02348c2b_ace9_4b29_a1e8_507d17002601
+env[35]=CHROME_DESKTOP=code-url-handler.desktop
+env[36]=LESSCLOSE=/usr/bin/lesspipe %s %s
+env[37]=XDG_SESSION_CLASS=user
+env[38]=TERM=xterm-256color
+env[39]=GTK_OVERLAY_SCROLLING=1
+env[40]=DEFAULTS_PATH=/usr/share/gconf/cinnamon.default.path
+env[41]=LESSOPEN=| /usr/bin/lesspipe %s
+env[42]=USER=derek
+env[43]=VSCODE_GIT_IPC_HANDLE=/run/user/1000/vscode-git-1b2665a32c.sock
+env[44]=GNOME_TERMINAL_SERVICE=:1.78
+env[45]=DISPLAY=:0
+env[46]=SHLVL=2
+env[47]=XDG_VTNR=7
+env[48]=DESKTOP_AUTOSTART_ID=10542372dd8aec7bd616303844866022600000011780038
+env[49]=XDG_SESSION_ID=c2
+env[50]=XDG_RUNTIME_DIR=/run/user/1000
+env[51]=VSCODE_GIT_ASKPASS_MAIN=/usr/share/code/resources/app/extensions/git/dist/askpass-main.js
+env[52]=XDG_DATA_DIRS=/usr/share/cinnamon:/usr/share/gnome:/home/derek/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+env[53]=GDK_BACKEND=x11
+env[54]=PATH=/home/derek/.local/bin:/home/derek/.cargo/bin:/home/derek/.local/bin:/home/derek/.cargo/bin:/home/derek/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+env[55]=GDMSESSION=cinnamon
+env[56]=ORIGINAL_XDG_CURRENT_DESKTOP=X-Cinnamon
+env[57]=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+env[58]=OLDPWD=/home/derek/Dev/school/CptS-360/pre1
+env[59]=TERM_PROGRAM=vscode
+env[60]=_=./a.out
+
+enter A
+&d=0xffb5de10 &e=0xffb5de14 &f=0xffb5de18
+enter B
+&g=0xffb5dde0 &h=0xffb5dde4 &i=0xffb5dde8
+enter C
+&u=0xffb5dda8 &v=0xffb5ddac &w=0xffb5ddb0 &i=0xffb5ddb4 &p=0xffb5dda4
+
+FP=0xffb5ddc8
+0xffb5ddc8 -> 0xffb5ddf8 -> 0xffb5de28 -> 0xffb5de88 -> (nil)
+
+0xffb5dda4 ffb5dda4
+0xffb5dda8        a u=10
+0xffb5ddac        b v=11
+0xffb5ddb0        c w=12
+0xffb5ddb4        d i=13
+0xffb5ddb8        5
+0xffb5ddbc eff16d00
+0xffb5ddc0 ffb5dea0
+0xffb5ddc4 56580fcc
+0xffb5ddc8 ffb5ddf8 C FP
+0xffb5ddcc 5657e468
+0xffb5ddd0        7 x=7
+0xffb5ddd4        8 y=8
+0xffb5ddd8 ffb5dde4
+0xffb5dddc ffb5dde8
+0xffb5dde0        7 g=7
+0xffb5dde4        8 h=8
+0xffb5dde8        9 i=9
+0xffb5ddec eff16d00
+0xffb5ddf0 ffb5dea0
+0xffb5ddf4 56580fcc
+0xffb5ddf8 ffb5de28 B FP
+0xffb5ddfc 5657e3c9
+0xffb5de00        4 x=4
+0xffb5de04        5 y=5
+0xffb5de08 ffb5de14
+0xffb5de0c ffb5de18
+0xffb5de10        4 d=4
+0xffb5de14        5 e=5
+0xffb5de18        6 f=6
+0xffb5de1c eff16d00
+0xffb5de20 ffb5dea0
+0xffb5de24 56580fcc
+0xffb5de28 ffb5de88 A FP
+0xffb5de2c 5657e320
+0xffb5de30        1 x=1
+0xffb5de34        2 y=2
+0xffb5de38 ffb5ffe6
+0xffb5de3c ffb5de60
+0xffb5de40        0
+0xffb5de44 f7f32000
+0xffb5de48 ffb5df48
+0xffb5de4c ffb5df34
+0xffb5de50 f7f32000
+0xffb5de54 f7f692f0
+0xffb5de58        1 a=1
+0xffb5de5c        2 b=2
+0xffb5de60        3 c=3
+0xffb5de64        4
+0xffb5de68       3d
+0xffb5de6c eff16d00
+0xffb5de70        4
+0xffb5de74 ffb5df34
+0xffb5de78 ffb5df48
+0xffb5de7c ffb5dea0
+0xffb5de80        0
+0xffb5de84 f7f32000
+0xffb5de88        0 main FP
+0xffb5de8c f7d65ee5
+0xffb5de90 f7f32000
+0xffb5de94 f7f32000
+0xffb5de98        0
+0xffb5de9c f7d65ee5
+0xffb5dea0        4 argc
+0xffb5dea4 ffb5df34
+0xffb5dea8 ffb5df48
+0xffb5deac ffb5dec4
+0xffb5deb0 f7f32000
+0xffb5deb4 f7f84000
+0xffb5deb8 ffb5df18
+0xffb5debc        0
+0xffb5dec0 f7f84990
+0xffb5dec4        0
+0xffb5dec8 f7f32000
+0xffb5decc f7f32000
+0xffb5ded0        0
+0xffb5ded4  94e2932
+0xffb5ded8 ce4e2f22
+0xffb5dedc        0
+0xffb5dee0        0
+0xffb5dee4        0
+0xffb5dee8        0
+0xffb5deec        0
+0xffb5def0        0
+0xffb5def4        0
+0xffb5def8 f7f6919d
+0xffb5defc 56580fcc
+0xffb5df00        4
+0xffb5df04 5657e0a0
+0xffb5df08        0
+0xffb5df0c 5657e0d5
+0xffb5df10 5657e1dd
+0xffb5df14        4
+0xffb5df18 ffb5df34
+0xffb5df1c 5657e620
+0xffb5df20 5657e690
+0xffb5df24 f7f692f0
+0xffb5df28 ffb5df2c
+0xffb5df2c       1c
+0xffb5df30        4
+0xffb5df34 ffb5f088
+0xffb5df38 ffb5f090
+0xffb5df3c ffb5f094
+0xffb5df40 ffb5f098
+0xffb5df44        0
+0xffb5df48 ffb5f09e
+0xffb5df4c ffb5f0ae
+0xffb5df50 ffb5f10a
+0xffb5df54 ffb5f11d
+0xffb5df58 ffb5f131
+0xffb5df5c ffb5f160
+0xffb5df60 ffb5f19a
+0xffb5df64 ffb5f1b6
+0xffb5df68 ffb5f1e2
+0xffb5df6c ffb5f212
+0xffb5df70 ffb5f221
+0xffb5df74 ffb5f259
+0xffb5df78 ffb5f282
+0xffb5df7c ffb5f2c8
+0xffb5df80 ffb5f2e1
+0xffb5df84 ffb5f2f4
+0xffb5df88 ffb5f310
+0xffb5df8c ffb5f31f
+0xffb5df90 ffb5f34e
+0xffb5df94 ffb5f36b
+0xffb5df98 ffb5f379
+0xffb5df9c ffb5f394
+0xffb5dfa0 ffb5f3a9
+
+exit C
+exit B
+exit A
+exit main

@@ -72,6 +72,7 @@ int main()
         // Read and print first entry in localMBR table
         read_sector(fd, localMBR, buf);
         p = (partition*)&buf[ptable_offset];
+        
         u32 start = localMBR + p->start_sector;
         u32 count = p->nr_sectors;
         u32 end   = start + count - 1;

@@ -29,7 +29,7 @@ typedef struct
 const char* dev = "vdisk";
 const u32 ptable_offset = 0x1be;
 
-int read_sector(int fd, int sector, char* buf)
+void read_sector(int fd, int sector, char* buf)
 {
     lseek(fd, sector * 512, SEEK_SET);
     read(fd, buf, 512);
@@ -46,12 +46,16 @@ int main()
     read_sector(fd, 0, buf); // MBR sector
     p = (partition*)&buf[ptable_offset]; // Start of partition table in MBR
 
-    printf("partition start_sector nr_sectors sys_type\n");
+    printf("partition start_sector nr_sectors end_sector sys_type\n");
 
     int i;
     for (i = 1; i <= 4; i++)
     {
-        printf("P%d: %14u %10u %8x\n", i, p->start_sector, p->nr_sectors, p->sys_type);
+        u32 start = p->start_sector;
+        u32 count = p->nr_sectors;
+        u32 end   = start + count - 1;
+        u8 type   = p->sys_type;
+        printf("P%d: %14u %10u %10u %8x\n", i, start, count, end, type);
 
         if (i == 4) // Assume P4 is EXT
             extStart = p->start_sector;
@@ -60,7 +64,7 @@ int main()
     }
     printf("\n");
     printf("****** Extended partitions ******\n");
-    printf("partition start_sector nr_sectors\n");
+    printf("partition start_sector nr_sectors end_sector\n");
 
     u32 localMBR = extStart;
     while (1)
@@ -68,7 +72,10 @@ int main()
         // Read and print first entry in localMBR table
         read_sector(fd, localMBR, buf);
         p = (partition*)&buf[ptable_offset];
-        printf("P%d: %14u %10u\n", i, localMBR + p->start_sector, p->nr_sectors);
+        u32 start = localMBR + p->start_sector;
+        u32 count = p->nr_sectors;
+        u32 end   = start + count - 1;
+        printf("P%d: %14u %10u %10u\n", i, start, count, end);
 
         p++; // Advance to second entry in localMBR table
         

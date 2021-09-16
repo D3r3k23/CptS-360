@@ -266,12 +266,7 @@ Node* path2node(char* path)
         if (strcmp(splits[i], ".") == 0)
             continue;
         else if (strcmp(splits[i], "..") == 0)
-        // {
-            // if (strcmp(node->name, "/") == 0)
-            //     continue;
-            // else
-                node = node->parent;
-        // }
+            node = node->parent;
         else
         {
             node = search_children(node, splits[i]);

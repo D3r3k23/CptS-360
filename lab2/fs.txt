@@ -1,0 +1,6 @@
+D /d1
+D /d1/d3
+F /d1/f1.txt
+D /d2
+F /d2/f2.txt
+F /f3.txt

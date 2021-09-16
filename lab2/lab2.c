@@ -6,7 +6,7 @@
 
 #ifdef LOG // gcc -DLOG to enable
     #undef LOG
-    // Forward __VA_ARGS__ to printf
+    // Forwards __VA_ARGS__ to printf
     #define LOG(...)                             \
         do {                                     \
             printf("[LOG] <%s> ", __FUNCTION__); \
@@ -21,7 +21,7 @@
 ////////// File system tree node //////////
 typedef struct node_t
 {
-    char name[64];
+    char name[16];
     char type;     // D for dir | F for file
     struct node_t* child;
     struct node_t* sibling;
@@ -114,16 +114,14 @@ int main()
     menu();
 
     char line[128];
-    char command[16];
-    char args[128];
-
     while (1)
     {
         printf("FS: [%s]$ ", cwd->name);
         fgets(line, 128, stdin);
         line[strlen(line) - 1] = '\0';
 
-        command[0] = args[0] = '\0';
+        char command[16] = "\0";
+        char args[128]   = "\0";
         sscanf(line, "%s %s", command, args);
 
         if (command[0] != '\0')
@@ -134,7 +132,10 @@ int main()
 
 void init(void)
 {
-    cwd = root = make_node("/", 'D');
+    root = make_node("/", 'D');
+    root->parent  = root;
+    root->sibling = root;
+    cwd = root;
     LOG("Root initialized");
 }
 
@@ -144,7 +145,12 @@ int exec_cmd(char* cmd, char* args)
         if (strcmp(cmd, CMD_NAMES[i]) == 0)
         {
             LOG("Executing command: %s %s", cmd, args);
-            return CMD_FUNCS[i](args);
+            int r = CMD_FUNCS[i](args);
+            if (r == 0)
+                LOG("Command %s successful", cmd);
+            else
+                LOG("Command %s failed", cmd);
+            return r;
         }
     printf("Error: Command %s not found. Enter \"menu\" to view a list of commands\n", cmd);
     return -1;
@@ -165,7 +171,7 @@ int delete_node(Node* node)
     if (!node)
         return 0;
 
-    if (!node->parent)
+    if (strcmp(node->name, "/") == 0)
     {
         printf("Error: Cannot delete the root node\n");
         return -1;
@@ -179,10 +185,9 @@ int delete_node(Node* node)
     }
     else
     {
-        Node* prev_sibling = parent->child;
-        while (prev_sibling->sibling != node) // Find node's previous sibling in linked list
-            prev_sibling = prev_sibling->sibling;
-        prev_sibling->sibling = node->sibling;
+        Node* prev; // node's previous sibling in linked list
+        for (prev = parent->child; prev->sibling != node; prev = prev->sibling); // Find prev
+        prev->sibling = node->sibling;
     }
 
     // Delete node's subtree
@@ -196,16 +201,13 @@ int delete_node(Node* node)
 Node* search_children(Node* parent, char* name)
 {
     LOG("Searching for child node %s in parent node %s", name, parent->name);
-    Node* node = parent->child;
-    while (node)
-    {
+    for (Node* node = parent->child; node; node = node->sibling)
         if (strcmp(node->name, name) == 0)
         {
             LOG("Node %s found", name);
             return node;
         }
-        node = node->sibling;
-    }
+
     LOG("Node %s not found", name);
     return NULL;
 }
@@ -213,32 +215,28 @@ Node* search_children(Node* parent, char* name)
 int insert_child(Node* parent, Node* child)
 {
     LOG("Inserting node %s into end of parent %s child list", child->name, parent->name);
-    Node* node = parent->child;
-
-    if (!node)
+    
+    if (!parent->child)
         parent->child = child;
     else
     {
-        while (node->sibling)
-            node = node->sibling;
-        node->sibling = child;
+        Node* last; // Last child in parent's linked list
+        for (last = parent->child; last->sibling; last = last->sibling);
+
+        last->sibling = child;
     }
-    child->parent  = parent;
-    child->child   = NULL;
-    child->sibling = NULL;
+    child->parent = parent;
     return 0;
 }
 
 int split_path(char* path, char components_o[][16])
 {
     LOG("Splitting path %s", path);
-    char* s = strtok(path, "/");
-    int n = 0;
-    while (s)
-    {
-        strcpy(components_o[n++], s);
-        s = strtok(NULL, "/");
-    }
+
+    int n = 0; // Number of path components
+    for (char* s = strtok(path, "/"); s; s = strtok(NULL, "/"), n++)
+        strcpy(components_o[n], s);
+
     LOG("Split path:");
     for (int i = 0; i < n; i++)
         LOG("%s", components_o[i]);
@@ -268,14 +266,20 @@ Node* path2node(char* path)
         if (strcmp(splits[i], ".") == 0)
             continue;
         else if (strcmp(splits[i], "..") == 0)
-            node = node->parent;
+        // {
+            // if (strcmp(node->name, "/") == 0)
+            //     continue;
+            // else
+                node = node->parent;
+        // }
         else
-            node = search_children(node, splits[i]);
-
-        if (!node)
         {
-            LOG("Node %s not found", path);
-            return NULL;
+            node = search_children(node, splits[i]);
+            if (!node)
+            {
+                LOG("Node %s not found", path);
+                return NULL;
+            }
         }
     }
     LOG("Node %s found", path);
@@ -284,20 +288,16 @@ Node* path2node(char* path)
 
 void node2path(Node* node, char* path_o)
 {
-    char components[64][16];
-    int i = 0;
-    while (node->parent)
-    {
-        strcpy(components[i++], node->name);
-        node = node->parent;
-    }
+    char components[64][16]; // Path components up to root
+    int n = 0;
+    for ( ; strcmp(node->name, "/") != 0; node = node->parent, n++)
+        strcpy(components[n], node->name);
 
-    path_o[0] = '/';
-    path_o[1] = '\0';
-    while (i--)
+    strcpy(path_o, "/");
+    for (int i = n - 1; i >= 0; i--)
     {
         strcat(path_o, components[i]);
-        if (i)
+        if (i > 0)
             strcat(path_o, "/");
     }
 }
@@ -306,37 +306,37 @@ int create_item(char type, char* path)
 {
     LOG("Creating %s %s", (type == 'D' ? "directory" : "file"), path);
     char temp[128];
-    char dir[64];
-    char name[64];
+    char dName[64];
+    char bName[64];
 
     strcpy(temp, path);
-    strcpy(dir, dirname(temp));
-    LOG("dirname: %s", dir);
+    strcpy(dName, dirname(temp));
+    LOG("dirname: %s", dName);
 
     strcpy(temp, path);
-    strcpy(name, basename(temp));
-    LOG("basename: %s", name);
+    strcpy(bName, basename(temp));
+    LOG("basename: %s", bName);
 
-    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+    if (strcmp(bName, "/") == 0 || strcmp(bName, ".") == 0 || strcmp(bName, "..") == 0)
     {
         printf("Error: Path %s is not valid\n", path);
         return -1;
     }
 
-    Node* parent = path2node(dir);
+    Node* parent = path2node(dName);
     if (parent->type != 'D')
     {
         printf("Error: Path %s is not valid\n", path);
         return -1;
     }
 
-    if (search_children(parent, name))
+    if (search_children(parent, bName))
     {
-        printf("Error: %s %s already exists\n", (type == 'D' ? "directory" : "file"), path);
+        printf("Error: %s already exists\n", path);
         return -1;
     }
 
-    Node* node = make_node(name, type);
+    Node* node = make_node(bName, type);
     insert_child(parent, node);
     return 0;
 }
@@ -411,13 +411,14 @@ int cd(char* path)
         return -1;
     }
 
-    LOG("Setting cwd to node %s ", node->name);
+    LOG("Setting cwd to node %s", node->name);
     cwd = node;
     return 0;
 }
 
 int ls(char* path)
 {
+    LOG("Listing contents of %s", path);
     Node* node = path2node(path);
     if (!node)
     {
@@ -435,12 +436,8 @@ int ls(char* path)
         return 0;
 
     printf("type name\n");
-    node = node->child;
-    while (node)
-    {
+    for (node = node->child; node; node = node->sibling)
         printf("[%c]  %s\n", node->type, node->name);
-        node = node->sibling;
-    }
 }
 
 int pwd()
@@ -463,7 +460,7 @@ int rm(char* path)
 
 int save(char* fn)
 {
-    if (strlen(fn) == 0)
+    if (fn[0] == '\0')
         fn = "fs.txt";
     LOG("Saving file system tree to %s", fn);
 
@@ -481,7 +478,7 @@ int save(char* fn)
 
 int reload(char* fn)
 {
-    if (strlen(fn) == 0)
+    if (fn[0] == '\0')
         fn = "fs.txt";
     LOG("Loading file system tree from %s", fn);
 
@@ -491,6 +488,7 @@ int reload(char* fn)
         printf("Error: Could not open %s\n", fn);
         return -1;
     }
+
     char line[128];
     while (fgets(line, 128, iFile))
     {
@@ -530,6 +528,7 @@ int reset()
     LOG("Resetting file system tree");
     while (root->child)
         delete_node(root->child);
+    return 0;
 }
 
 int quit()

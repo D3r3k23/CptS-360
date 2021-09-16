@@ -484,6 +484,8 @@ int reload(char* fn)
         return -1;
     }
 
+    reset();
+
     char line[128];
     while (fgets(line, 128, iFile))
     {

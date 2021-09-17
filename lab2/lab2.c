@@ -217,7 +217,9 @@ int insert_child(Node* parent, Node* child)
     LOG("Inserting node %s into end of parent %s child list", child->name, parent->name);
     
     if (!parent->child)
+    {
         parent->child = child;
+    }
     else
     {
         Node* last; // Last child in parent's linked list
@@ -512,6 +514,7 @@ int menu()
             printf("| ");
     }
     printf("]\n");
+    return 0'
 }
 
 int tree()

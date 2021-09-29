@@ -1,93 +1,162 @@
-/***** LAB3 base code *****/ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
 
-char gpath[128];    // hold token strings 
-char *arg[64];      // token string pointers
-int  n;             // number of token strings
+#include <unistd.h>
+#include <sys/wait.h>
 
-char dpath[128];    // hold dir strings in PATH
-char *dir[64];      // dir string pointers
-int  ndir;          // number of dirs   
+#ifdef LOG // gcc -DLOG to enable
+    #undef LOG
+    // Forwards __VA_ARGS__ to printf
+    #define LOG(...)                             \
+        do {                                     \
+            printf("[LOG] <%s> ", __FUNCTION__); \
+            printf(__VA_ARGS__);                 \
+            printf("\n");                        \
+        } while (0)
+#else
+    #define LOG(...)
+#endif
 
-int tokenize(char *pathname) // YOU have done this in LAB2
-{                            // YOU better know how to apply it from now on
-  char *s;
-  strcpy(gpath, pathname);   // copy into global gpath[]
-  s = strtok(gpath, " ");    
-  n = 0;
-  while(s){
-    arg[n++] = s;           // token string pointers   
-    s = strtok(0, " ");
-  }
-  arg[n] =0;                // arg[n] = NULL pointer 
+void exec_command(char* cmd, char* args[], int nArgs, char* envp[]);
+
+int tokenize(char* src, char* token, char* dest[], int maxCount);
+int is_path(char* path);
+
+char* pathDirs[64];
+int nPathDirs;
+
+int main(int argc, char* argv[], char* envp[])
+{
+    pathDirs[0] = "\0";
+    char pathStr[1024];
+    strcpy(pathStr, getenv("PATH"));
+    nPathDirs = tokenize(pathStr, ":", pathDirs, 64);
+
+    for (int i = 0; i < nPathDirs; i++)
+        LOG("PATH[%d] = %s", i, pathDirs[i]);
+
+    while (1)
+    {
+        char* cwd = basename(getenv("PWD"));
+        printf("sh[pid=%d]:%s$ ", getpid(), cwd);
+
+        char line[128];
+        fgets(line, 128, stdin);
+        line[strlen(line) - 1] = '\0'; // Trim newline
+
+        char* args[32];
+        int nArgs = tokenize(line, " ", args, 32);
+        if (nArgs <= 0)
+            continue;
+
+        for (int i = 0; i < nArgs; i++)  
+            LOG("arg[%d] = %s", i, args[i]);
+
+        exec_command(args[0], args, nArgs, envp);
+    }
 }
 
-int main(int argc, char *argv[ ], char *env[ ])
+void exec_command(char* cmd, char* args[], int nArgs, char* envp[])
 {
-  int i;
-  int pid, status;
-  char *cmd;
-  char line[28];
-
-  // The base code assume only ONE dir[0] -> "/bin"
-  // YOU do the general case of many dirs from PATH !!!!
-  dir[0] = "/bin";
-  ndir   = 1;
-
-  // show dirs
-  for(i=0; i<ndir; i++)
-    printf("dir[%d] = %s\n", i, dir[i]);
-  
-  while(1){
-    printf("sh %d running\n", getpid());
-    printf("enter a command line : ");
-    fgets(line, 128, stdin);
-    line[strlen(line) - 1] = 0; 
-    if (line[0]==0)
-      continue;
-    
-    tokenize(line);
-
-    for (i=0; i<n; i++){  // show token strings   
-        printf("arg[%d] = %s\n", i, arg[i]);
+    if (strcmp(cmd, "cd") == 0)
+    {
+        char* newCWD = (nArgs > 1) ? args[1] : getenv("HOME");
+        chdir(newCWD);
     }
-    // getchar();
-    
-    cmd = arg[0];         // line = arg0 arg1 arg2 ... 
-
-    if (strcmp(cmd, "cd")==0){
-      chdir(arg[1]);
-      continue;
+    else if (strcmp(cmd, "exit") == 0)
+    {
+        int exitCode = (nArgs > 1) ? atoi(args[1]) : 0;
+        exit(0);
     }
-    if (strcmp(cmd, "exit")==0)
-      exit(0); 
-    
-     pid = fork();
-     
-     if (pid){
-       printf("sh %d forked a child sh %d\n", getpid(), pid);
-       printf("sh %d wait for child sh %d to terminate\n", getpid(), pid);
-       pid = wait(&status);
-       printf("ZOMBIE child=%d exitStatus=%x\n", pid, status); 
-       printf("main sh %d repeat loop\n", getpid());
-     }
-     else{
-       printf("child sh %d running\n", getpid());
-       
-       // make a cmd line = dir[0]/cmd for execve()
-       strcpy(line, dir[0]); strcat(line, "/"); strcat(line, cmd);
-       printf("line = %s\n", line);
+    else
+    {
+        int pid = fork();
+        
+        if (pid) // In parent
+        {
+            printf("Process %d forked child %d\n", getpid(), pid);
+            int status;
+            pid = wait(&status);
+            LOG("ZOMBIE child=%d exitStatus=%x", pid, status); 
+        }
+        else // In child
+        {
+            printf("Process %d running\n", getpid());
+            char pathname[128] = "\0";
+            int found = 0;
+            if (is_path(cmd))
+            {
+                if (access(cmd, F_OK) == 0)
+                {
+                    found = 1;
+                    strcpy(pathname, cmd);
+                }
+            }
+            else
+            {
+                for (int i = 0; !found && (i < nPathDirs); i++)
+                {
+                    char* dirName = pathDirs[i];
+                    DIR* dir;
+                    if (dir = opendir(dirName))
+                    {
+                        struct dirent* file;
+                        while (!found && (file = readdir(dir)))
+                            if (strcmp(file->d_name, cmd) == 0)
+                            {
+                                found = 1;
+                                strcpy(pathname, dirName);
+                                strcat(pathname, "/");
+                                strcat(pathname, cmd);
+                            }
+                    }
+                }
+            }
+            if (found)
+            {
+                execve(pathname, args, envp);
+                {
+                    LOG("execve failed: errno = %d", errno);
+                    exit(errno);
+                }
+            }
+            else
+            {
+                printf("Command \"%s\" not found\n", cmd);
+                exit(-1);
+            }
+        }
+    }
+}
 
-       int r = execve(line, arg, env);
+int tokenize(char* src, char* token, char* dest[], int maxCount)
+{
+    int n = 0;
+    for (char* s = strtok(src, token); s; s = strtok(NULL, token))
+    {
+        if (n == maxCount - 1)
+        {
+            dest[n] = NULL;
+            return n;
+        }
+        else
+            dest[n++] = s;
+    }
+    dest[n] = NULL;
+    return n;
+}
 
-       printf("execve failed r = %d\n", r);
-       exit(1);
-     }
-  }
+int is_path(char* path)
+{
+    char temp[64];
+    strcpy(temp, path);
+    char* base = basename(temp);
+    return strcmp(path, base) != 0;
 }
 
 /********************* YOU DO ***********************

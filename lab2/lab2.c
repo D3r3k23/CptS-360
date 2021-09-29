@@ -22,7 +22,7 @@
 typedef struct node_t
 {
     char name[16];
-    char type;     // D for dir | F for file
+    char type; // D for dir | F for file
     struct node_t* child;
     struct node_t* sibling;
     struct node_t* parent;
@@ -514,7 +514,7 @@ int menu()
             printf("| ");
     }
     printf("]\n");
-    return 0'
+    return 0;
 }
 
 int tree()

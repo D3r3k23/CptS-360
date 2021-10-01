@@ -191,7 +191,7 @@ void exec_command(char* cmd, char* args[], int nArgs, char* envp[])
     // Find command path
     char pathName[128] = "\0";
     int found = 0;
-    if (is_path(cmd) && access(cmd, F_OK) == 0)
+    if (is_path(cmd) && access(cmd, X_OK) == 0)
     {
         found = 1;
         strcpy(pathName, cmd);

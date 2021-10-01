@@ -22,16 +22,9 @@
     #define LOG(...)
 #endif
 
-typedef enum
-{
-    RD_NONE,
-    RD_STDIN,
-    RD_STDOUT_TRUNC,
-    RD_STDOUT_APPEND
-} Redirect;
-
-void exec_command(char* cmd, char* args[], int nArgs, char* envp[], Redirect redirect, const char* rd_pathname);
-void exec        (char* cmd, char* args[], int nArgs, char* envp[], Redirect redirect, const char* rd_pathname);
+void exec_command_line(char* cmd, char* args[], int nArgs, char* envp[]);
+void exec_pipe(char* cmd, char* args[], int nArgs, char* envp[], int pd[2]);
+void exec_command(char* cmd, char* args[], int nArgs, char* envp[]);
 
 int tokenize(char* src, char* token, char* dest[], int maxCount);
 int is_path(char* path);
@@ -63,61 +56,16 @@ int main(int argc, char* argv[], char* envp[])
         if (nArgs <= 0)
             continue;
 
-        for (int i = 0; i < nArgs; i++)  
-            LOG("arg[%d] = %s", i, args[i]);
-
-        int currentCmdIndex = 0;
-        for (int i = 0; i < nArgs; i++)
-        {
-            Redirect redirect = RD_NONE;
-            if      (strcmp(args[i], "<")  == 0) redirect = RD_STDIN;
-            else if (strcmp(args[i], ">")  == 0) redirect = RD_STDOUT_TRUNC;
-            else if (strcmp(args[i], ">>") == 0) redirect = RD_STDOUT_APPEND;
-            
-            if (redirect != RD_NONE)
-            {
-                if (i == currentCmdIndex)
-                {
-                    printf("Enter a command before %s\n", args[i]);
-                    break;
-                }
-                else if (!args[i + 1])
-                {
-                    printf("Enter a file name following %s\n", args[i]);
-                    break;
-                }
-                else    
-                {
-                    LOG("Redirect %d to %s", redirect, args[i + 1]);
-                    char* pathName = args[i + 1];
-                    char* cmd      = args[currentCmdIndex];
-                    char** cmdArgs = args + currentCmdIndex;
-                    int nCmdArgs   = i - currentCmdIndex;
-                    
-                    exec_command(cmd, cmdArgs, nCmdArgs, envp, redirect, pathName);
-                    i++;
-                    currentCmdIndex = i + 1;
-                }
-            }
-            else if (i == nArgs - 1)
-            {
-                char* cmd      = args[currentCmdIndex];
-                char** cmdArgs = args + currentCmdIndex;
-                int nCmdArgs   = i - currentCmdIndex + 1;
-
-                exec_command(cmd, cmdArgs, nCmdArgs, envp, RD_NONE, NULL);
-                break;
-            }
-        }
+        exec_command_line(args[0], args, nArgs, envp);
     }
 }
 
-void exec_command(char* cmd, char* args[], int nArgs, char* envp[], Redirect redirect, const char* rd_pathname)
+void exec_command_line(char* cmd, char* args[], int nArgs, char* envp[])
 {
-    LOG("Executing cmd %s with %d args, redirect %s", cmd, nArgs, rd_pathname);
-    for (int i = 0; i < nArgs; i++)
+    LOG("Executing command line:");
+    for (int i = 0; i < nArgs; i++)  
         LOG("arg[%d] = %s", i, args[i]);
-        
+
     if (strcmp(cmd, "cd") == 0)
     {
         char* newCWD = (nArgs > 1) ? args[1] : getenv("HOME");
@@ -131,140 +79,157 @@ void exec_command(char* cmd, char* args[], int nArgs, char* envp[], Redirect red
     else
     {
         int pid = fork();
-        
-        if (pid) // In parent
+        if (pid) // Parent proc
         {
             printf("Process %d forked child %d\n", getpid(), pid);
             int status;
             pid = wait(&status);
-            LOG("ZOMBIE child=%d exitStatus=%x", pid, status); 
+            LOG("ZOMBIE child=%d exitStatus=%x", pid, status);
         }
-        else // In child
+        else // Child process
         {
-            printf("Process %d running\n", getpid());
-            char* cmdArgs[32];
-            for (int i = 0; i < nArgs; i++)
-                cmdArgs[i] = args[i];
-            cmdArgs[nArgs] = NULL;
-            exec(cmd, args, nArgs, envp, redirect, rd_pathname);
+            exec_pipe(cmd, args, nArgs, envp, NULL);
         }
     }
 }
 
-void exec(char* cmd, char* args[], int nArgs, char* envp[], Redirect redirect, const char* rd_pathname)
+void exec_pipe(char* cmd, char* args[], int nArgs, char* envp[], int pd[2])
 {
-    LOG("Executing cmd %s with %d args, redirect %s", cmd, nArgs, rd_pathname);
-    for (int i = 0; i < nArgs; i++)
+    LOG("Executing command %s%s", cmd, (pd ? " with pipe:" : ":"));
+    for (int i = 0; i < nArgs; i++)  
         LOG("arg[%d] = %s", i, args[i]);
-    
-    char* headCmd = cmd;
-    char* headArgs[32];
-    for (int i = 0; i < nArgs; i++)
-        headArgs[i] = args[i];
-    headArgs[nArgs] = NULL;
-    int nHeadArgs = nArgs;
 
-    char* tailCmd;
-    char** tailArgs;
-    int nTailArgs;
+    if (pd) // Pipe passed in
+    {
+        close(pd[0]);
+        dup2(pd[1], 1);
+        close(pd[1]);
+    }
 
-    int piped = 0;
+    int lastPipeIndex = 0;
     for (int i = 0; i < nArgs; i++)
         if (strcmp(args[i], "|") == 0)
-        {
-            piped = 1;
-            tailCmd   = args[i + 1];
-            tailArgs  = args + i + 1;
-            nTailArgs = nArgs - i - 1;
+            lastPipeIndex = i;
+    
+    if (lastPipeIndex != 0)
+    {
+        char* headCmd = cmd;
+        char* headArgs[32];
+        int nHeadArgs = nArgs - lastPipeIndex - 1;
+        for (int i = 0; i < nHeadArgs; i++)
+            headArgs[i] = args[i];
+        headArgs[nHeadArgs] = NULL;
 
-            nHeadArgs = nArgs - nTailArgs - 1;
-            headArgs[nHeadArgs] = NULL;
+        char* tailCmd = args[lastPipeIndex + 1];
+        char* tailArgs[32];
+        int nTailArgs = nArgs - lastPipeIndex - 1;
+        for (int i = 0; i < nTailArgs; i++)
+            tailArgs[i] = args[i + lastPipeIndex + 1];
+        tailArgs[nTailArgs] = NULL;
+
+        int t_pd[2];
+        pipe(t_pd);
+
+        int pid = fork();
+        if (pid) // Parent
+        {
+            printf("Process %d forked child %d\n", getpid(), pid);
+
+            close(t_pd[1]);
+            dup2(t_pd[0], 0);
+            close(t_pd[0]);
+
+            int status;
+            pid = wait(&status);
+            LOG("ZOMBIE child=%d exitStatus=%x", pid, status);
+
+            exec_command(tailCmd, tailArgs, nTailArgs, envp);
+        }
+        else // Child
+        {
+            exec_pipe(headCmd, headArgs, nHeadArgs, envp, t_pd);
+        }
+    }
+    else
+    {
+        exec_command(cmd, args, nArgs, envp);
+    }
+}
+
+void exec_command(char* cmd, char* args[], int nArgs, char* envp[])
+{
+    LOG("Executing command %s:", cmd);
+    for (int i = 0; i < nArgs; i++)  
+        LOG("arg[%d] = %s", i, args[i]);
+    
+    // IO Redirect
+    for (int i = 0; i < nArgs; i++)
+    {
+        if (strcmp(args[i], "<")  == 0)
+        {
+            close(0);
+            open(args[i + 1], O_RDONLY);
+            args[i] = NULL;
             break;
         }
-    int pid;
-    int pd[2];
-    if (piped)
-    {
-        pid = fork();
-        pipe(pd);
-    }
-
-    if (!piped || pid) // Parent
-    {
-        if (piped)
+        else if (strcmp(args[i], ">")  == 0)
         {
-            close(pd[0]);
             close(1);
-            dup(pd[1]);
-            close(pd[1]);
+            open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            args[i] = NULL;
+            break;
         }
-        char pathname[128] = "\0";
-        int found = 0;
-        if (is_path(headCmd) && access(headCmd, F_OK) == 0)
+        else if (strcmp(args[i], ">>") == 0)
         {
-            found = 1;
-            strcpy(pathname, headCmd);
-        }
-        else
-        {
-            for (int i = 0; !found && (i < nPathDirs); i++)
-            {
-                char* dirName = pathDirs[i];
-                DIR* dir;
-                if (dir = opendir(dirName))
-                {
-                    struct dirent* file;
-                    while (!found && (file = readdir(dir)))
-                        if (strcmp(file->d_name, headCmd) == 0)
-                        {
-                            found = 1;
-                            strcpy(pathname, dirName);
-                            strcat(pathname, "/");
-                            strcat(pathname, headCmd);
-                        }
-                }
-            }
-        }
-        if (found)
-        {
-            switch (redirect)
-            {
-                case RD_STDIN:
-                    close(0);
-                    open(rd_pathname, O_RDONLY);
-                    break;
-                case RD_STDOUT_TRUNC:
-                    close(1);
-                    open(rd_pathname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                    break;
-                case RD_STDOUT_APPEND:
-                    close(1);
-                    open(rd_pathname, O_WRONLY | O_CREAT | O_APPEND, 0644);
-                    break;
-            }
-
-            execve(pathname, headArgs, envp);
-            {
-                LOG("execve failed: errno = %d", errno); // If stdout was closed?
-                exit(errno);
-            }
-        }
-        else
-        {
-            printf("Command \"%s\" not found\n", cmd);
-            exit(-1);
+            close(1);
+            open(args[i + 1], O_WRONLY | O_CREAT | O_APPEND, 0644);
+            args[i] = NULL;
+            break;
         }
     }
-    else // Child
+
+    // Find command path
+    char pathName[128] = "\0";
+    int found = 0;
+    if (is_path(cmd) && access(cmd, F_OK) == 0)
     {
-        if (piped)
+        found = 1;
+        strcpy(pathName, cmd);
+    }
+    else
+    {
+        for (int i = 0; !found && (i < nPathDirs); i++)
         {
-            close(pd[1]);
-            close(0);
-            dup(pd[0]);
-            close(pd[0]);
+            char* dirName = pathDirs[i];
+            DIR* dir;
+            if (dir = opendir(dirName))
+            {
+                struct dirent* file;
+                while (!found && (file = readdir(dir)))
+                    if (strcmp(file->d_name, cmd) == 0)
+                    {
+                        found = 1;
+                        strcpy(pathName, dirName);
+                        strcat(pathName, "/");
+                        strcat(pathName, cmd);
+                    }
+            }
         }
-        exec(tailCmd, tailArgs, nTailArgs, envp, redirect, rd_pathname);
+    }
+
+    // Execute command
+    if (found)
+    {
+        execve(pathName, args, envp);
+        {
+            LOG("execve failed: errno = %d", errno);
+            exit(errno);
+        }
+    }
+    else
+    {
+        printf("Command %s not found\n", cmd);
+        exit(1);
     }
 }
 

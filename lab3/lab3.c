@@ -111,7 +111,7 @@ void exec_pipe(char* cmd, char* args[], int nArgs, char* envp[], int pd[2])
         if (strcmp(args[i], "|") == 0)
             lastPipeIndex = i;
     
-    if (lastPipeIndex != 0)
+    if (lastPipeIndex != 0) // Has pipe
     {
         char* headCmd = cmd;
         char* headArgs[32];

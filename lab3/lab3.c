@@ -74,7 +74,7 @@ void exec_command_line(char* cmd, char* args[], int nArgs, char* envp[])
     else if (strcmp(cmd, "exit") == 0)
     {
         int exitCode = (nArgs > 1) ? atoi(args[1]) : 0;
-        exit(0);
+        exit(exitCode);
     }
     else
     {

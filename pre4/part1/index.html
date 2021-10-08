@@ -1,0 +1,49 @@
+<html><head>
+<title>
+  YOUR index.html file
+</title>
+
+</head>
+
+<body bgcolor="#FF0000" link="#330033" alink="#999999" vlink="#666666"
+leftmargin=8 topmargin=8
+
+<p>
+<center>
+<H1>Welcome to YOUR WebSite</H1>
+<P>
+<img src="mypic.jpg" width=500>
+<P>
+<h2>Change it to YOUR pretty picture!</h2>
+</center>
+
+<P><h2>HOW TO login to your account</h2>
+<p> ssh NAME@cs360.eecs.wsu.edu    NAME=your last name in lowercase
+<p> enter your password            password=your WSU ID without leading 0
+
+<P><h2>HOW TO copy files to you account</h2>
+<p> scp filename NAME@cs360.eecs.wsu.edu:public_html
+<p> enter your password
+
+<P>
+<P>
+<P>
+<p><h2>-------- The following is for LAB4Pre Assignment -------------</h2>
+
+<P>
+<!-- NOTE: change kcw in ACTION to YOUR login name -->
+<FORM METHOD="POST" ACTION="http://69.166.48.15/~henderson/cgi-bin/mycgi.bin">
+
+Enter command: <INPUT NAME="command"> [mkdir|rmdir|rm|cat|cp|ls]<P>
+
+Enter filename1: <INPUT NAME="filename1"> <P>
+
+Enter filename2: <INPUT NAME="filename2"> <P>
+
+Submit command: <INPUT TYPE="submit" VALUE="Click to Submit"> <P>
+ 
+</FORM> 
+
+</body>
+</html>
+

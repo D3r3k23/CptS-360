@@ -214,6 +214,7 @@ void exec_command(char* cmd, char* args[], int nArgs, char* envp[])
                         strcat(pathName, cmd);
                     }
             }
+            closedir(dir);
         }
     }
 

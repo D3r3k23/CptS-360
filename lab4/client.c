@@ -101,13 +101,14 @@ void client_command(const char* line)
 
 void server_command(const char* line)
 {
+    int n;
     // Send message to server
-    int n = write(sfd, line, MAX);
+    n = write(sfd, line, MAX);
     printf("client: wrote n=%d bytes; line=%s\n", n, line);
 
     // Get response from server
     // Read a line from sock and show it
     char response[MAX];
-    int n = read(sfd, response, MAX);
+    n = read(sfd, response, MAX);
     printf("client: read n=%d bytes; echo=%s\n", n, response);
 }

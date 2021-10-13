@@ -6,8 +6,27 @@
 #include <time.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+const char* COMMANDS[CMD_COUNT] = {
+    "get",
+    "put",
+    "ls",
+    "cd",
+    "pwd",
+    "mkdir",
+    "rmdir",
+    "rm",
+    "lcat",
+    "lls",
+    "lcd",
+    "lpwd",
+    "lmkdir",
+    "lrmdir",
+    "lrm"
+};
 
 CMD find_cmd(const char* cmd)
 {
@@ -45,9 +64,9 @@ void c_ls(const char* pathname)
     lstat(pathname, &sp);
 
     if (S_ISREG(sp.st_mode))
-        c_ls_file(pathname);
+        ls_file(pathname);
     else if (S_ISDIR(sp.st_mode))
-        c_ls_dir(pathname);
+        ls_dir(pathname);
 }
 
 void c_cd(const char* pathname)
@@ -76,7 +95,7 @@ void c_rm(const char* pathname)
     unlink(pathname);
 }
 
-void c_ls_file(const char* pathname)
+void ls_file(const char* pathname)
 {
     static const char* modes = "rwxrwxrwx";
 
@@ -87,7 +106,7 @@ void c_ls_file(const char* pathname)
         printf("%c", '-');
     else if (S_ISDIR(sp.st_mode))
         printf("%c", 'd');
-    else if (S_ISLINK(sp.st_mode))
+    else if (S_ISLNK(sp.st_mode))
         printf("%c", 'l');
 
     for (int i = 0; i < 9; i++)
@@ -107,7 +126,7 @@ void c_ls_file(const char* pathname)
     strcpy(tmp, pathname);
     printf("%s", basename(tmp));
 
-    if (S_ISLINK(sp.st_mode))
+    if (S_ISLNK(sp.st_mode))
     {
         char linkname[128];
         readlink(pathname, linkname, 128);
@@ -118,7 +137,7 @@ void c_ls_file(const char* pathname)
     printf("\n");
 }
 
-void c_ls_dir(const char* pathname)
+void ls_dir(const char* pathname)
 {
     DIR* dir = opendir(pathname);
     if (!dir)

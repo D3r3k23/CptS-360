@@ -46,53 +46,49 @@ int main()
     printf("3. bind socket to server\n");
     if ((bind(sfd, (struct sockaddr *)&saddr, sizeof(saddr))) != 0) { 
         printf("socket bind failed\n"); 
-        exit(0);
+        exit(0); 
     }
       
     // Now server is ready to listen and verification 
     if ((listen(sfd, 5)) != 0) { 
         printf("Listen failed\n"); 
-        exit(0);
+        exit(0); 
     }
-    while (1) {
-        // Try to accept a client connection as descriptor newsock
-        length = sizeof(caddr);
-        cfd = accept(sfd, (struct sockaddr *)&caddr, &length);
-        if (cfd < 0) {
-            printf("server: accept error\n");
-            exit(1);
-        }
+    while(1){
+       // Try to accept a client connection as descriptor newsock
+       length = sizeof(caddr);
+       cfd = accept(sfd, (struct sockaddr *)&caddr, &length);
+       if (cfd < 0){
+          printf("server: accept error\n");
+          exit(1);
+       }
 
-        printf("server: accepted a client connection from\n");
-        printf("-----------------------------------------------\n");
-        printf("    IP=%s  port=%d\n", "127.0.0.1", ntohs(caddr.sin_port));
-        printf("-----------------------------------------------\n");
+       printf("server: accepted a client connection from\n");
+       printf("-----------------------------------------------\n");
+       printf("    IP=%s  port=%d\n", "127.0.0.1", ntohs(caddr.sin_port));
+       printf("-----------------------------------------------\n");
 
-        // Processing loop
-        while (1) {
-            printf("server ready for next request ....\n");
-            n = read(cfd, line, MAX);
-            if (n==0){
-            printf("server: client died, server loops\n");
-            close(cfd);
-            break;
-            }
+       // Processing loop
+       while(1){
+         printf("server ready for next request ....\n");
+         n = read(cfd, line, MAX);
+         if (n==0){
+           printf("server: client died, server loops\n");
+           close(cfd);
+           break;
+         }
 
-            // show the line string
-            printf("server: read  n=%d bytes; line=%s\n", n, line);
+         // show the line string
+         printf("server: read  n=%d bytes; line=[%s]\n", n, line);
 
-            int a, b;
-            sscanf(line, "%d%d", &a, &b);
-            int sum = a + b;
+         strcat(line, " ECHO");
 
-            sprintf(ans, "%d %d sum=%d", a, b, sum);
+         // send the echo line to client 
+         n = write(cfd, line, MAX);
 
-            // send the echo line to client 
-            n = write(cfd, ans, MAX);
-
-            printf("server: wrote n=%d bytes; echo=%s\n", n, ans);
-            printf("server: ready for next request\n");
-        }
+         printf("server: wrote n=%d bytes; ECHO=[%s]\n", n, line);
+         printf("server: ready for next request\n");
+       }
     }
 }
 

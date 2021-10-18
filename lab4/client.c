@@ -56,6 +56,7 @@ int main(int argc, char *argv[], char *env[])
         printf("Enter a command: ");
         char line[MAX];
         fgets(line, MAX, stdin);
+        line[strlen(line) - 1] = '\0';
 
         client_command(line);
     }

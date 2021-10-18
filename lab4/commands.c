@@ -53,12 +53,15 @@ void c_cat(const char* pathname)
 
 void c_ls(const char* pathname)
 {
+    printf("ls called\n");
+    printf("pathname= %s, len=%d", pathname, strlen(pathname));
     char buf[128];
     if (!pathname || strlen(pathname) == 0)
     {
         getcwd(buf, 128);
         pathname = buf;
     }
+    printf("pwd: %s\n", pathname);
 
     struct stat sp;
     lstat(pathname, &sp);

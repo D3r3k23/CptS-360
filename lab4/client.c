@@ -19,8 +19,11 @@
 #define MAX 256
 #define PORT 1234
 
-void client_command(const char* line);
-void server_command(const char* line);
+void client_command(char* line);
+char* server_command(char* line);
+
+void get(const char* pathname, int file_size);
+void put(const char* pathname);
 
 int sfd;
 
@@ -53,31 +56,40 @@ int main(int argc, char *argv[], char *env[])
     printf("********  client processing loop  *********\n");
     while (1)
     {
-        printf("Enter a command: ");
+        char cwd[128];
+        const char* dirname = basename(getcwd(cwd, 128));
+        printf("[Client:%s] $", dirname);
         char line[MAX];
         fgets(line, MAX, stdin);
-        line[strlen(line) - 1] = '\0';
 
         client_command(line);
     }
+    close(sfd);
 }
 
-void client_command(const char* line)
+void client_command(char* line)
 {
-    char* cmd_name;
-    char* pathname;
-    sscanf(line, "%s %s", cmd_name, pathname);
+    char* cmd_name = strtok(line, " ");
+    char* pathname = strtok(NULL, " ");
     CMD cmd = find_cmd(cmd_name);
 
+    char* response;
     switch (cmd)
     {
-        case GET:
+        case LEXIT:
+            close(sfd);
+            exit(0);
 
+        case GET:
+            response = server_command(line);
+            get(pathname, atol(response));
             break;
         case PUT:
-
+            server_command(line);
+            put(pathname);
             break;
 
+        case EXIT:
         case LS:
         case CD:
         case PWD:
@@ -94,22 +106,47 @@ void client_command(const char* line)
         case LMKDIR: c_mkdir(pathname); break;
         case LRMDIR: c_rmdir(pathname); break;
         case LRM:    c_rm(pathname);    break;
-
-        default:
-            return;
     }
 }
 
-void server_command(const char* line)
+char* server_command(char* line)
 {
-    int n;
     // Send message to server
-    n = write(sfd, line, MAX);
-    printf("client: wrote n=%d bytes; line=%s\n", n, line);
+    int n = write(sfd, line, MAX);
+    printf("client: write %d bytes, message: %s\n", n, line);
 
     // Get response from server
-    // Read a line from sock and show it
-    char response[MAX];
+    static char response[MAX];
+    bzero(response, MAX);
     n = read(sfd, response, MAX);
-    printf("client: read n=%d bytes; echo=%s\n", n, response);
+    printf("client: read %d bytes, response:\n%s", n, response);
+    return response;
+}
+
+int min(int a, int b)
+{
+    return (a < b) ? a : b;
+}
+
+void get(const char* pathname, int file_size)
+{
+    int fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    if (fd != -1)
+    {
+        int total = 0;
+        while (total < file_size)
+        {
+            char buf[MAX];
+            int packet_size = min(file_size - total, MAX);
+            int n = read(sfd, buf, packet_size);
+            total += n;
+            write(fd, buf, n);
+        }
+        close(fd);
+    }
+}
+
+void put(const char* pathname)
+{
+
 }

@@ -10,7 +10,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-const char* COMMANDS[CMD_COUNT] = {
+static const char* COMMANDS[CMD_COUNT] = {
+    "exit",
     "get",
     "put",
     "ls",
@@ -19,6 +20,7 @@ const char* COMMANDS[CMD_COUNT] = {
     "mkdir",
     "rmdir",
     "rm",
+    "lexit",
     "lcat",
     "lls",
     "lcd",
@@ -53,22 +55,21 @@ void c_cat(const char* pathname)
 
 void c_ls(const char* pathname)
 {
-    printf("ls called\n");
-    printf("pathname= %s, len=%d", pathname, strlen(pathname));
-    char buf[128];
+    char cwd[128];
     if (!pathname || strlen(pathname) == 0)
+        pathname = getcwd(cwd, 128);
+
+    struct stat st;
+    int r = lstat(pathname, &st);
+    if (r == -1)
     {
-        getcwd(buf, 128);
-        pathname = buf;
+        printf("Unable to open %s\n", pathname);
+        return;
     }
-    printf("pwd: %s\n", pathname);
 
-    struct stat sp;
-    lstat(pathname, &sp);
-
-    if (S_ISREG(sp.st_mode))
+    if (S_ISREG(st.st_mode))
         ls_file(pathname);
-    else if (S_ISDIR(sp.st_mode))
+    else if (S_ISDIR(st.st_mode))
         ls_dir(pathname);
 }
 
@@ -98,48 +99,6 @@ void c_rm(const char* pathname)
     unlink(pathname);
 }
 
-void ls_file(const char* pathname)
-{
-    static const char* modes = "rwxrwxrwx";
-
-    struct stat sp;
-    lstat(pathname, &sp);
-
-    if (S_ISREG(sp.st_mode))
-        printf("%c", '-');
-    else if (S_ISDIR(sp.st_mode))
-        printf("%c", 'd');
-    else if (S_ISLNK(sp.st_mode))
-        printf("%c", 'l');
-
-    for (int i = 0; i < 9; i++)
-        if (sp.st_mode & (1 << (8 - i)))
-            printf("%c", modes[i]);
-        else
-            printf("%c", '-');
-        
-    printf("%4d ", sp.st_nlink);
-    printf("%4d ", sp.st_gid);
-    printf("%4d ", sp.st_uid);
-    printf("%4d ", sp.st_size);
-
-    printf("%s ", ctime(&sp.st_ctime));
-
-    char tmp[128];
-    strcpy(tmp, pathname);
-    printf("%s", basename(tmp));
-
-    if (S_ISLNK(sp.st_mode))
-    {
-        char linkname[128];
-        readlink(pathname, linkname, 128);
-        linkname[127] = '\0';
-        printf(" -> %s", linkname);
-    }
-
-    printf("\n");
-}
-
 void ls_dir(const char* pathname)
 {
     DIR* dir = opendir(pathname);
@@ -148,7 +107,7 @@ void ls_dir(const char* pathname)
     else
     {
         struct dirent* ent;
-        while (ent - readdir(dir))
+        while (ent = readdir(dir))
         {
             if (ent->d_name[0] == '.')
                 continue;
@@ -157,4 +116,46 @@ void ls_dir(const char* pathname)
         }
     }
     closedir(dir);
+}
+
+void ls_file(const char* pathname)
+{
+    static const char* modes = "rwxrwxrwx";
+
+    struct stat st;
+    lstat(pathname, &st);
+
+    if (S_ISREG(st.st_mode))
+        printf("%c", '-');
+    else if (S_ISDIR(st.st_mode))
+        printf("%c", 'd');
+    else if (S_ISLNK(st.st_mode))
+        printf("%c", 'l');
+
+    for (int i = 0; i < 9; i++)
+        if (st.st_mode & (1 << (8 - i)))
+            printf("%c", modes[i]);
+        else
+            printf("%c", '-');
+        
+    printf("%4d ", st.st_nlink);
+    printf("%4d ", st.st_gid);
+    printf("%4d ", st.st_uid);
+    printf("%4d ", st.st_size);
+
+    printf("%s ", ctime(&st.st_ctime));
+
+    char tmp[128];
+    strcpy(tmp, pathname);
+    printf("%s", basename(tmp));
+
+    if (S_ISLNK(st.st_mode))
+    {
+        char linkname[128];
+        readlink(pathname, linkname, 128);
+        linkname[127] = '\0';
+        printf(" -> %s", linkname);
+    }
+
+    printf("\n");
 }

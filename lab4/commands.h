@@ -3,7 +3,8 @@
 
 typedef enum
 {
-    GET = 0,
+    EXIT = 0,
+    GET,
     PUT,
     LS,
     CD,
@@ -11,6 +12,7 @@ typedef enum
     MKDIR,
     RMDIR,
     RM,
+    LEXIT,
     LCAT,
     LLS,
     LCD,
@@ -22,8 +24,6 @@ typedef enum
     CMD_NONE
 } CMD;
 
-const char* COMMANDS[CMD_COUNT];
-
 CMD find_cmd(const char* cmd);
 
 void c_cat(const char* pathname);
@@ -34,7 +34,7 @@ void c_mkdir(const char* pathname);
 void c_rmdir(const char* pathname);
 void c_rm(const char* pathname);
 
-void ls_file(const char* pathname);
 void ls_dir(const char* pathname);
+void ls_file(const char* pathname);
 
 #endif // COMMANDS_H

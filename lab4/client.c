@@ -137,7 +137,7 @@ void client_command(char* line)
     }
 }
 
-void server_command(char* line)
+void server_command(const char* line)
 {
     int n = write(sfd, line, MAX);
     printf("Write %d bytes, message: %s\n", n, line);

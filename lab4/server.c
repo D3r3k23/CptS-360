@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "file_transfer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,21 +18,21 @@
 #include <dirent.h>
 #include <libgen.h>
 #include <time.h>
+#include <errno.h>
 
 #define MAX 256
 #define PORT 1234
 
-enum { EXIT_SERVER = 78 };
-
 void exec_cmd(char* line);
 
-void get(const char* pathname);
-void put(const char* pathname);
-
 int cfd;
+int running = 1;
 
 int main() 
-{ 
+{
+    char cwd[128];
+    chroot(getcwd(cwd, 128));
+
     int sfd;
     struct sockaddr_in saddr, caddr;
     
@@ -54,6 +55,7 @@ int main()
     if ((bind(sfd, (struct sockaddr*)&saddr, sizeof(saddr))) != 0)
     {
         printf("Socket bind failed\n");
+        printf("errno[%d]: %s\n", errno, strerror(errno));
         exit(1);
     }
 
@@ -65,7 +67,7 @@ int main()
         exit(1);
     }
     
-    while (1)
+    while (running)
     {
         // Try to accept a client connection as descriptor newsock
         int length = sizeof(caddr);
@@ -82,113 +84,69 @@ int main()
         printf("-----------------------------------------------\n");
 
         // Processing loop
-        while (1)
+        while (running)
         {
-            printf("server: ready for next request ....\n");
+            printf("Server ready for next request ...\n");
 
             char message[MAX];
             int n = read(cfd, message, MAX);
-            printf("server: read %d bytes, message: %s\n", n, message);
+            printf("Read %d bytes, message: %s\n", n, message);
+            
             exec_cmd(message);
         }
+        close(cfd);
     }
     close(sfd);
 }
 
 void exec_cmd(char* line)
 {
-    int pd[2]; // 0: write | 1: read
-    pipe(pd);
+    char* cmd_name = strtok(line, " ");
+    char* pathname = strtok(NULL, " ");
 
-    int pid = fork();
-    if (pid) // Parent proc
+    CMD cmd = find_cmd(cmd_name);
+    printf("Cmd: %s\n", cmd_name);
+    printf("Pathname: %s\n", pathname);
+
+    FILE* f;
+    switch (cmd)
     {
-        int status;
-        pid = wait(&status);
-        if (status == EXIT_SERVER)
-        {
-            close(cfd);
-            exit(0);
-        }
+        // Exit server
+        case EXIT:
+            running = 0;
+            break;
 
-        close(pd[0]);
+        // Send requested file
+        case GET:
+            send_file(cfd, pathname);
+            break;
 
-        char buf[MAX];
-        read(pd[1], buf, MAX);
-        
-        int n = write(cfd, buf, MAX);
-        printf("server: write %d bytes; response:\n%s", n, buf);
+        // Receive and save requested file
+        case PUT:
+            recv_file(cfd, pathname);
+            break;
+
+        // 1. Execute command, save output to file
+        // 2. Send and delete file
+        case LS:
+            f = fopen(".ls.txt", "w");
+            c_ls(pathname, f);
+            fclose(f);
+            send_file(cfd, ".ls.txt");
+            // c_rm(".ls.txt");
+            break;
+        case PWD:
+            f = fopen(".pwd.txt", "w");
+            c_pwd(f);
+            fclose(f);
+            send_file(cfd, ".pwd.txt");
+            // c_rm(".pwd.txt");
+            break;
+
+        // Silently execute command
+        case CD:    c_cd(pathname);    break;
+        case MKDIR: c_mkdir(pathname); break;
+        case RMDIR: c_rmdir(pathname); break;
+        case RM:    c_rm(pathname);    break;
     }
-    else // Child proc
-    {
-        char cwd[128];
-        chroot(getcwd(cwd, 128));
-
-        close(pd[1]);
-        dup2(pd[0], 1); // Redirect stdout to pd[0]
-
-        char* cmd_name = strtok(line, " ");
-        char* pathname = strtok(NULL, " ");
-        CMD cmd = find_cmd(cmd_name);
-
-        switch (cmd)
-        {
-            case EXIT:
-                exit(EXIT_SERVER);
-
-            case GET:
-                get(pathname);
-                break;
-            case PUT:
-
-                break;
-
-            case LS:    c_ls(pathname);    break;
-            case CD:    c_cd(pathname);    break;
-            case PWD:   c_pwd();           break;
-            case MKDIR: c_mkdir(pathname); break;
-            case RMDIR: c_rmdir(pathname); break;
-            case RM:    c_rm(pathname);    break;
-        }
-    }
-}
-
-int min(int a, int b)
-{
-    return (a < b) ? a : b;
-}
-
-void get(const char* pathname)
-{
-    struct stat st;
-    int r = lstat(pathname, &st);
-    if (r == -1)
-    {
-        printf("Unable to open %s\n", pathname);
-        return;
-    }
-
-    int file_size = st.st_size;
-    char fs_str[16];
-    sprintf(fs_str, "%d", file_size);
-    write(cfd, fs_str, 16);
-
-    int fd = open(pathname, O_RDONLY);
-    if (fd != 0)
-    {
-        int total = 0;
-        while (total < file_size)
-        {
-            char buf[MAX];
-            int packet_size = min(file_size - total, MAX);
-            int n = read(fd, buf, packet_size);
-            total += n;
-            write(cfd, buf, n);
-        }
-    }
-}
-
-void put(const char* pathname)
-{
-
 }

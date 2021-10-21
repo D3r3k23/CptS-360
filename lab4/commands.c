@@ -1,6 +1,5 @@
 #include "commands.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -20,7 +19,6 @@ static const char* COMMANDS[CMD_COUNT] = {
     "mkdir",
     "rmdir",
     "rm",
-    "lexit",
     "lcat",
     "lls",
     "lcd",
@@ -38,22 +36,20 @@ CMD find_cmd(const char* cmd)
     return CMD_NONE;
 }
 
-void c_cat(const char* pathname)
+void c_cat(const char* pathname, FILE* f)
 {
     FILE* file = fopen(pathname, "r");
     if (!file)
-        printf("Unable to open file %s\n", pathname);
+        fprintf(f, "Unable to open file %s\n", pathname);
     else
     {
         char line[256];
         while (fgets(line, 256, file))
-        {
-            printf("%s\n", line);
-        }
+            fprintf(f, "%s", line);
     }
 }
 
-void c_ls(const char* pathname)
+void c_ls(const char* pathname, FILE* f)
 {
     char cwd[128];
     if (!pathname || strlen(pathname) == 0)
@@ -63,14 +59,14 @@ void c_ls(const char* pathname)
     int r = lstat(pathname, &st);
     if (r == -1)
     {
-        printf("Unable to open %s\n", pathname);
+        fprintf(f, "Unable to stat %s\n", pathname);
         return;
     }
 
     if (S_ISREG(st.st_mode))
-        ls_file(pathname);
+        ls_file(pathname, f);
     else if (S_ISDIR(st.st_mode))
-        ls_dir(pathname);
+        ls_dir(pathname, f);
 }
 
 void c_cd(const char* pathname)
@@ -78,10 +74,10 @@ void c_cd(const char* pathname)
     chdir(pathname);
 }
 
-void c_pwd(void)
+void c_pwd(FILE* f)
 {
     char buf[128];
-    printf("%s\n", getcwd(buf, 128));
+    fprintf(f, "%s\n", getcwd(buf, 128));
 }
 
 void c_mkdir(const char* pathname)
@@ -99,63 +95,64 @@ void c_rm(const char* pathname)
     unlink(pathname);
 }
 
-void ls_dir(const char* pathname)
+void ls_dir(const char* pathname, FILE* f)
 {
     DIR* dir = opendir(pathname);
     if (!dir)
-        printf("Unable to open dir %s\n", pathname);
+        fprintf(f, "Unable to open dir %s\n", pathname);
     else
     {
         struct dirent* ent;
         while (ent = readdir(dir))
-        {
-            if (ent->d_name[0] == '.')
-                continue;
-            else
-                ls_file(ent->d_name);
-        }
+            if (ent->d_name[0] != '.')
+                ls_file(ent->d_name, f);
     }
     closedir(dir);
 }
 
-void ls_file(const char* pathname)
+void ls_file(const char* pathname, FILE* f)
 {
     static const char* modes = "rwxrwxrwx";
 
     struct stat st;
-    lstat(pathname, &st);
+    int r = lstat(pathname, &st);
+    if (r == -1)
+    {
+        fprintf("Unable to stat %s\n", pathname);
+        return;
+    }
 
     if (S_ISREG(st.st_mode))
-        printf("%c", '-');
+        fprintf(f, "%c", '-');
     else if (S_ISDIR(st.st_mode))
-        printf("%c", 'd');
+        fprintf(f, "%c", 'd');
     else if (S_ISLNK(st.st_mode))
-        printf("%c", 'l');
+        fprintf(f, "%c", 'l');
 
     for (int i = 0; i < 9; i++)
         if (st.st_mode & (1 << (8 - i)))
-            printf("%c", modes[i]);
+            fprintf(f, "%c", modes[i]);
         else
-            printf("%c", '-');
+            fprintf(f, "%c", '-');
         
-    printf("%4d ", st.st_nlink);
-    printf("%4d ", st.st_gid);
-    printf("%4d ", st.st_uid);
-    printf("%4d ", st.st_size);
+    fprintf(f, "%3d ", st.st_nlink);
+    fprintf(f, "%4d ", st.st_gid);
+    fprintf(f, "%4d ", st.st_uid);
+    fprintf(f, "%5d ", st.st_size);
 
-    printf("%s ", ctime(&st.st_ctime));
+    fprintf(f, "%s ", ctime(&st.st_ctime));
 
     char tmp[128];
     strcpy(tmp, pathname);
-    printf("%s", basename(tmp));
+    fprintf(f, "%s", basename(tmp));
 
     if (S_ISLNK(st.st_mode))
     {
         char linkname[128];
         readlink(pathname, linkname, 128);
         linkname[127] = '\0';
-        printf(" -> %s", linkname);
+        fprintf(f, " -> %s", linkname);
     }
 
-    printf("\n");
+    fprintf(f, "\n");
 }

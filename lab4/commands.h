@@ -1,9 +1,11 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+#include <stdio.h>
+
 typedef enum
 {
-    EXIT = 0,
+    EXIT,
     GET,
     PUT,
     LS,
@@ -12,7 +14,6 @@ typedef enum
     MKDIR,
     RMDIR,
     RM,
-    LEXIT,
     LCAT,
     LLS,
     LCD,
@@ -26,15 +27,15 @@ typedef enum
 
 CMD find_cmd(const char* cmd);
 
-void c_cat(const char* pathname);
-void c_ls(const char* pathname);
+void c_cat(const char* pathname, FILE* f);
+void c_ls(const char* pathname, FILE* f);
 void c_cd(const char* pathname);
-void c_pwd(void);
+void c_pwd(FILE* f);
 void c_mkdir(const char* pathname);
 void c_rmdir(const char* pathname);
 void c_rm(const char* pathname);
 
-void ls_dir(const char* pathname);
-void ls_file(const char* pathname);
+void ls_dir(const char* pathname, FILE* f);
+void ls_file(const char* pathname, FILE* f);
 
 #endif // COMMANDS_H

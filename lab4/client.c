@@ -22,8 +22,9 @@
 
 void client_command(char* line);
 void server_command(char* line);
+void menu(void);
 
-int sfd;
+int sfd; // Server FD
 int running = 1;
 
 int main(int argc, char *argv[], char *env[]) 
@@ -53,6 +54,7 @@ int main(int argc, char *argv[], char *env[])
     } 
 
     printf("********  client processing loop  *********\n");
+    menu();
     while (running)
     {
         char cwd[128];
@@ -76,8 +78,8 @@ void client_command(char* line)
     char* pathname = strtok(NULL, " ");
     
     CMD cmd = find_cmd(cmd_name);
-    printf("Cmd: %s\n", cmd_name);
-    printf("Pathname: %s\n", pathname);
+    printf("command:  %s\n", cmd_name);
+    printf("pathname: %s\n", pathname);
 
     switch (cmd)
     {
@@ -120,6 +122,7 @@ void client_command(char* line)
             break;
 
         // Execute command locally
+        case MENU:   menu();                  break;
         case LCAT:   c_cat(pathname, stdout); break;
         case LLS:    c_ls(pathname, stdout);  break;
         case LCD:    c_cd(pathname);          break;
@@ -127,6 +130,10 @@ void client_command(char* line)
         case LMKDIR: c_mkdir(pathname);       break;
         case LRMDIR: c_rmdir(pathname);       break;
         case LRM:    c_rm(pathname);          break;
+
+        default:
+            printf("Unknown command\n");
+            break;
     }
 }
 
@@ -134,4 +141,13 @@ void server_command(char* line)
 {
     int n = write(sfd, line, MAX);
     printf("Write %d bytes, message: %s\n", n, line);
+}
+
+void menu(void)
+{
+    printf("*******************************************\n");
+    printf("*           help           exit           *\n");
+    printf("* get  put  ls  cd  pwd  mkdir  rmdir  rm *\n");
+    printf("* lcat     lls lcd lpwd lmkdir lrmdir lrm *\n");
+    printf("*******************************************\n");
 }

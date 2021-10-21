@@ -11,6 +11,7 @@
 
 static const char* COMMANDS[CMD_COUNT] = {
     "exit",
+    "menu",
     "get",
     "put",
     "ls",
@@ -118,7 +119,7 @@ void ls_file(const char* pathname, FILE* f)
     int r = lstat(pathname, &st);
     if (r == -1)
     {
-        fprintf("Unable to stat %s\n", pathname);
+        fprintf(f, "Unable to stat %s\n", pathname);
         return;
     }
 
@@ -135,10 +136,10 @@ void ls_file(const char* pathname, FILE* f)
         else
             fprintf(f, "%c", '-');
         
-    fprintf(f, "%3d ", st.st_nlink);
-    fprintf(f, "%4d ", st.st_gid);
-    fprintf(f, "%4d ", st.st_uid);
-    fprintf(f, "%5d ", st.st_size);
+    fprintf(f, "%3lu ", st.st_nlink);
+    fprintf(f, "%4d ",  st.st_gid);
+    fprintf(f, "%4d ",  st.st_uid);
+    fprintf(f, "%5ld ", st.st_size);
 
     fprintf(f, "%s ", ctime(&st.st_ctime));
 

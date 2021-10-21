@@ -25,7 +25,7 @@
 
 void exec_cmd(char* line);
 
-int cfd;
+int cfd; // Client FD
 int running = 1;
 
 int main() 
@@ -33,7 +33,7 @@ int main()
     char cwd[128];
     chroot(getcwd(cwd, 128));
 
-    int sfd;
+    int sfd; // Server FD
     struct sockaddr_in saddr, caddr;
     
     printf("1. Create a socket\n");
@@ -105,8 +105,8 @@ void exec_cmd(char* line)
     char* pathname = strtok(NULL, " ");
 
     CMD cmd = find_cmd(cmd_name);
-    printf("Cmd: %s\n", cmd_name);
-    printf("Pathname: %s\n", pathname);
+    printf("command:  %s\n", cmd_name);
+    printf("pathname: %s\n", pathname);
 
     FILE* f;
     switch (cmd)
@@ -133,14 +133,14 @@ void exec_cmd(char* line)
             c_ls(pathname, f);
             fclose(f);
             send_file(cfd, ".ls.txt");
-            // c_rm(".ls.txt");
+            c_rm(".ls.txt");
             break;
         case PWD:
             f = fopen(".pwd.txt", "w");
             c_pwd(f);
             fclose(f);
             send_file(cfd, ".pwd.txt");
-            // c_rm(".pwd.txt");
+            c_rm(".pwd.txt");
             break;
 
         // Silently execute command
@@ -148,5 +148,9 @@ void exec_cmd(char* line)
         case MKDIR: c_mkdir(pathname); break;
         case RMDIR: c_rmdir(pathname); break;
         case RM:    c_rm(pathname);    break;
+
+        default:
+            printf("Unknown command\n");
+            break;
     }
 }

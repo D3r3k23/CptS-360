@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 
@@ -16,19 +17,30 @@ void send_file(int sock, const char* pathname)
     int r = lstat(pathname, &st);
     if (r == -1)
     {
-        printf("Unable to stat %s\n", pathname);
+        printf("Error: Unable to stat %s\n", pathname);
         return;
     }
-    // Send file mode?
+    if (!S_ISREG(st.st_mode))
+    {
+        printf("Error: %s is not a file\n", pathname);
+        return;
+    }
 
     char buf[MAX];
 
     // 2. Send file size
     int file_size = st.st_size;
-    sprintf(buf, "%d", file_size);
+    sprintf(buf, "%d\n", file_size);
     write(sock, buf, MAX);
 
-    // 3. Read file and send contents
+    memset(buf, 0, MAX);
+
+    // 3. Send file mode
+    int file_mode = st.st_mode;
+    sprintf(buf, "%d", file_mode);
+    write(sock, buf, MAX);
+
+    // 4. Read file and send contents
     int fd = open(pathname, O_RDONLY);
     if (fd >= 0)
     {
@@ -40,7 +52,7 @@ void send_file(int sock, const char* pathname)
             write(sock, buf, n);
             total += n;
         }
-    close (fd);
+        close (fd);
     }
 }
 
@@ -49,13 +61,19 @@ void recv_file(int sock, const char* pathname)
     char buf[MAX];
 
     // 1. Receive file size
-    int n = read(sock, buf, MAX);
+    read(sock, buf, MAX);
     int file_size = strtol(buf, NULL, 10);
 
-    // 2. Create file
-    int fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    memset(buf, 0, MAX);
+
+    // 2. Receive file mode
+    read(sock, buf, MAX);
+    int file_mode = strtol(buf, NULL, 10);
+
+    // 3. Create file
+    int fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, file_mode);
     
-    // 3. Receive file and save contents
+    // 4. Receive file and save contents
     int total = 0;
     while (total < file_size)
     {

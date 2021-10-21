@@ -6,6 +6,7 @@
 typedef enum
 {
     EXIT,
+    MENU,
     GET,
     PUT,
     LS,

@@ -1,4 +1,4 @@
 1. Run "make" in lab4/
 2. Open lab4/server/ and lab4/client/ in separate terminals
-3. Run "./server" in lab4/server/ and "./client" in lab4/client/
+3. Run "sudo ./server" in lab4/server/ and "./client" in lab4/client/
 4. To close server and client, enter "exit" in client command line

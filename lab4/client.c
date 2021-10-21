@@ -20,8 +20,8 @@
 #define MAX 256
 #define PORT 1234
 
-void client_command(char* line);
-void server_command(char* line);
+void client_command(const char* line);
+void server_command(const char* line);
 void menu(void);
 
 int sfd; // Server FD
@@ -70,7 +70,7 @@ int main(int argc, char *argv[], char *env[])
     close(sfd);
 }
 
-void client_command(char* line)
+void client_command(const char* line)
 {
     char temp[MAX];
     strcpy(temp, line);

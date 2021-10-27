@@ -1,0 +1,2 @@
+rm build/main.bin
+gcc -m32 -g -o build/main.bin src/*

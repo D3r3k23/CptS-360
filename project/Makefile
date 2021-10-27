@@ -8,7 +8,7 @@ OBJS := $(subst $(SRC_DIR), $(BUILD_DIR), $(SRCS:.c=.o))
 
 all : $(OBJS) $(EXE)
 
-$(EXE) : $(OBJS)
+$(EXE) : $(OBJS) | $(BUILD_DIR)
 	@echo "make" $(EXE)
 	gcc $(GCC_FLAGS) -MMD -o $(EXE) $(OBJS)
 

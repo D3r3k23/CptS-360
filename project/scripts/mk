@@ -1,2 +1,2 @@
-rm build/main.bin
-gcc -m32 -g -o build/main.bin src/*
+rm -f build/main.bin build/*.o
+gcc -m32 -g -o build/main.bin src/*.c

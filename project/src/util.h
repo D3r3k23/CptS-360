@@ -1,6 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include "type.h"
+
 int get_block(int dev, int blk, char *buf);
 int put_block(int dev, int blk, char *buf);
 int tokenize(char *pathname);

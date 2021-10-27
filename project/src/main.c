@@ -1,70 +1,32 @@
+#include "global.h"
 #include "log.h"
 #include "type.h"
 #include "util.h"
-#include "cd_ls_pwd.c"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-#include <libgen.h>
-#include <sys/stat.h>
-#include <time.h>
+#include "cd_ls_pwd.h"
 
 #include <ext2fs/ext2_fs.h>
 
-MINODE minode[NMINODE];
-MINODE *root;
-PROC   proc[NPROC], *running;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-char gpath[128]; // global for tokenized components
-char *name[64];  // assume at most 64 components in pathname
-int   n;         // number of component strings
+#include <fcntl.h>
+#include <libgen.h>
+#include <sys/stat.h>
 
-int fd, dev;
-int nblocks, ninodes, bmap, imap, iblk;
+void init();
+void mount_root();
+void quit();
 
-char line[128], cmd[32], pathname[128];
+const char *disk = "diskimage";
 
-int init()
-{
-    MINODE *mip;
-    PROC   *p;
-
-    printf("init\n");
-
-    for (int i = 0; i < NMINODE; i++)
-    {
-        mip = &minode[i];
-        mip->dev = mip->ino = 0;
-        mip->refCount = 0;
-        mip->mounted = 0;
-        mip->mptr = 0;
-    }
-    for (int i = 0; i < NPROC; i++)
-    {
-        p = &proc[i];
-        p->pid = i;
-        p->uid = p->gid = 0;
-        p->cwd = 0;
-    }
-}
-
-// load root INODE and set root pointer to it
-int mount_root()
-{  
-    printf("mount_root()\n");
-    root = iget(dev, 2);
-}
-
-char *disk = "diskimage";
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int ino;
     char buf[BLKSIZE];
 
-    printf("checking EXT2 FS ....");
+    printf("checking EXT2 FS ...");
     if ((fd = open(disk, O_RDWR)) < 0)
     {
         printf("open %s failed\n", disk);
@@ -131,7 +93,34 @@ int main(int argc, char *argv[])
     }
 }
 
-int quit()
+void init()
+{
+    LOG("init");
+    for (int i = 0; i < NMINODE; i++)
+    {
+        minode[i].dev = 0;
+        minode[i].ino = 0;
+        minode[i].refCount = 0;
+        minode[i].mounted = 0;
+        minode[i].mptr = 0;
+    }
+    for (int i = 0; i < NPROC; i++)
+    {
+        proc[i].pid = i;
+        proc[i].uid = 0;
+        proc[i].gid = 0;
+        proc[i].cwd = 0;
+    }
+}
+
+// load root INODE and set root pointer to it
+void mount_root()
+{  
+    LOG("mount_root");
+    root = iget(dev, 2);
+}
+
+void quit()
 {
     int i;
     MINODE *mip;

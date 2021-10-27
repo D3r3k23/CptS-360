@@ -1,6 +1,8 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#include <ext2fs/ext2_fs.h>
+
 typedef unsigned char  u8;
 typedef unsigned short u16;
 typedef unsigned int   u32;
@@ -37,6 +39,8 @@ typedef struct proc
 {
     struct proc *next;
     int          pid;      // process ID  
+    int          ppid;     // parent ID?
+    int          status;
     int          uid;      // user ID
     int          gid;
     MINODE      *cwd;      // CWD directory pointer  

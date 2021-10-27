@@ -3,10 +3,10 @@
 
 #include "type.h"
 
-int cd();
-int ls_file(MINODE *mip, char *name);
-int ls_dir(MINODE *mip);
-int ls();
-char *pwd(MINODE *wd);
+void cd();
+void ls_file(MINODE *mip, char *name);
+void ls_dir(MINODE *mip);
+void ls();
+void pwd(MINODE *wd);
 
 #endif // CD_LS_PWD_H

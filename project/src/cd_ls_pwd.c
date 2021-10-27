@@ -1,19 +1,25 @@
 #include "cd_ls_pwd.h"
 
-int cd()
+#include "global.h"
+#include "util.h"
+
+#include <stdio.h>
+#include <string.h>
+
+void cd()
 {
     printf("cd: under construction READ textbook!!!!\n");
 
     // READ Chapter 11.7.3 HOW TO chdir
 }
 
-int ls_file(MINODE *mip, char *name)
+void ls_file(MINODE *mip, char *name)
 {
     printf("ls_file: to be done: READ textbook!!!!\n");
     // READ Chapter 11.7.3 HOW TO ls
 }
 
-int ls_dir(MINODE *mip)
+void ls_dir(MINODE *mip)
 {
     printf("ls_dir: list CWD's file names; YOU FINISH IT as ls -l\n");
 
@@ -33,18 +39,18 @@ int ls_dir(MINODE *mip)
         printf("%s  ", temp);
 
         cp += dp->rec_len;
-        dp = (DIR *)cp;
+        dp = (DIR*)cp;
     }
     printf("\n");
 }
 
-int ls()
+void ls()
 {
     printf("ls: list CWD only! YOU FINISH IT for ls pathname\n");
     ls_dir(running->cwd);
 }
 
-char *pwd(MINODE *wd)
+void pwd(MINODE *wd)
 {
     printf("pwd: READ HOW TO pwd in textbook!!!!\n");
     if (wd == root)
@@ -53,6 +59,3 @@ char *pwd(MINODE *wd)
         return;
     }
 }
-
-
-

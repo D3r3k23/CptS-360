@@ -12,33 +12,40 @@
 
 void cd(char* pathname)
 {
-    // READ Chapter 11.7.3 HOW TO chdir
-
-    // if (!pathname)
-    // {
-
-    // }
-
-    // INODE * current;
-    // if (pathname[0] == '/') //validate its a dir
-    // {
-    //    current = root;
-    //    pathname++;
-	// }
-    // else{
-    //     current = cwd;
-	// }
-    // char * tok = strtok(path, "/"); //tokenize path
-    // do
-    // {
-    //  int num = search(current,tok);
-    //  if (num == 0)
-    //  {
-    //   return;
-	//  }
-    //  current = getino(dev); //from global.h
-	// } while (token = strtok(NULL,"/")); //continue until reach end
-    // cwd = current;
+   /*int ino = getino(pathname);//returns error if ino = 0 
+   MINODE *mip = iget(ino);
+   if(S_ISDIR(mip->INODE.i_mode)) //check if dir
+   {
+   	iput(running->cwd);
+   	running->cwd = mip;
+   }
+   else
+   {
+   	printf("cd error: not a valid directory");
+   	return;
+   }
+   */
+   MINODE * current;
+   if (pathname[0]=='/')
+   {
+	   current = root;
+	   pathname++;
+   }
+   else
+   {
+   	current = running->cwd;
+   }
+   char * tok = strtok(pathname,"/");
+   do {
+   	int num = search(current,tok);
+   	if (num == 0)
+   	{
+   		return 0;
+   	}
+   	current = getino(pathname);
+   } while (tok = strtok(NULL,"/"));
+   
+    running->cwd = current;
 }
 
 void ls(char* pathname)

@@ -1,2 +1,6 @@
-rm -f build/main.bin build/*.o
-gcc -m32 -g -o build/main.bin src/*.c
+//rm -f build/main.bin build/*.o
+//gcc -m32 -g -o build/main.bin src/*.c
+mkdisk
+rm a.out 2> dev/null
+gcc main.c util.c
+a.out

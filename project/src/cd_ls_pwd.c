@@ -6,11 +6,35 @@
 #include <stdio.h>
 #include <string.h>
 
-void cd()
+void cd(char* pathname)
 {
-    printf("cd: under construction READ textbook!!!!\n");
-
     // READ Chapter 11.7.3 HOW TO chdir
+
+    // if (!pathname)
+    // {
+
+    // }
+
+    // INODE * current;
+    // if (pathname[0] == '/') //validate its a dir
+    // {
+    //    current = root;
+    //    pathname++;
+	// }
+    // else{
+    //     current = cwd;
+	// }
+    // char * tok = strtok(path, "/"); //tokenize path
+    // do
+    // {
+    //  int num = search(current,tok);
+    //  if (num == 0)
+    //  {
+    //   return;
+	//  }
+    //  current = getino(dev); //from global.h
+	// } while (token = strtok(NULL,"/")); //continue until reach end
+    // cwd = current;
 }
 
 void ls_file(MINODE *mip, char *name)
@@ -27,7 +51,7 @@ void ls_dir(MINODE *mip)
     DIR *dp;
     char *cp;
 
-    get_block(dev, mip->INODE.i_block[0], buf);
+    get_block(mip->INODE.i_block[0], buf);
     dp = (DIR *)buf;
     cp = buf;
     
@@ -50,12 +74,31 @@ void ls()
     ls_dir(running->cwd);
 }
 
-void pwd(MINODE *wd)
+void pwd()
 {
-    printf("pwd: READ HOW TO pwd in textbook!!!!\n");
+    MINODE *cwd = running->cwd;
+    if (cwd == root)
+        printf("/");
+    else
+        rec_pwd(cwd);
+    printf("\n");
+}
+
+void rec_pwd(MINODE* wd)
+{
     if (wd == root)
-    {
-        printf("/\n");
         return;
-    }
+
+    char buf[BLKSIZE];
+    get_block(wd->INODE.i_block[0], buf);
+
+    u32 my_ino;
+    u32 parent_ino = findino(wd, &my_ino);
+    MINODE* pip = iget(parent_ino);
+
+    char name[256];
+    findmyname(pip, my_ino, name);
+
+    rec_pwd(pip);
+    printf("/%s", name);
 }

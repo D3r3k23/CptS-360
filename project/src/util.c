@@ -15,28 +15,26 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int get_block(int dev, int blk, char *buf)
+char* get_block(int blk, char* buf)
 {
     lseek(dev, (long)blk*BLKSIZE, 0);
     read(dev, buf, BLKSIZE);
+    return buf;
 }   
 
-int put_block(int dev, int blk, char *buf)
+int put_block(int blk, char* buf)
 {
     lseek(dev, (long)blk*BLKSIZE, 0);
-    write(dev, buf, BLKSIZE);
+    return write(dev, buf, BLKSIZE);
 }   
 
 int tokenize(char *pathname)
 {
-    int i;
-    char *s;
     printf("tokenize %s\n", pathname);
 
-    strcpy(gpath, pathname);   // tokens are in global gpath[ ]
-    n = 0;
-
-    s = strtok(gpath, "/");
+    strcpy(gpath, pathname); // tokens are in global gpath[ ]
+    int n = 0;
+    char* s = strtok(gpath, "/");
     while (s)
     {
         name[n] = s;
@@ -45,21 +43,21 @@ int tokenize(char *pathname)
     }
     name[n] = 0;
 
-    for (i= 0; i<n; i++)
+    for (int i = 0; i < n; i++)
         printf("%s  ", name[i]);
     printf("\n");
+    return n;
 }
 
 // return minode pointer to loaded INODE
-MINODE *iget(int dev, int ino)
+MINODE *iget(int ino)
 {
-    int i;
     MINODE *mip;
     char buf[BLKSIZE];
     int blk, offset;
     INODE *ip;
 
-    for (i=0; i<NMINODE; i++)
+    for (int i = 0; i < NMINODE; i++)
     {
         mip = &minode[i];
         if (mip->refCount && mip->dev == dev && mip->ino == ino)
@@ -70,7 +68,7 @@ MINODE *iget(int dev, int ino)
         }
     }
 
-    for (i=0; i<NMINODE; i++)
+    for (int i = 0; i < NMINODE; i++)
     {
         mip = &minode[i];
         if (mip->refCount == 0)
@@ -86,7 +84,7 @@ MINODE *iget(int dev, int ino)
 
             //printf("iget: ino=%d blk=%d offset=%d\n", ino, blk, offset);
 
-            get_block(dev, blk, buf);
+            get_block(blk, buf);
             ip = (INODE *)buf + offset;
             // copy INODE to mp->INODE
             mip->INODE = *ip;
@@ -99,12 +97,12 @@ MINODE *iget(int dev, int ino)
 
 void iput(MINODE *mip)
 {
-    int i, block, offset;
+    if (!mip)
+        return;
+
+    int block, offset;
     char buf[BLKSIZE];
     INODE *ip;
-
-    if (mip==0) 
-        return;
 
     mip->refCount--;
 
@@ -121,19 +119,18 @@ void iput(MINODE *mip)
     *****************************************************/
 } 
 
-int search(MINODE *mip, char *name)
+u32 search(MINODE *mip, char *name)
 {
-    int i; 
-    char *cp, c, sbuf[BLKSIZE], temp[256];
+    char *cp, sbuf[BLKSIZE], temp[256];
     DIR *dp;
     INODE *ip;
 
-    printf("search for %s in MINODE = [%d, %d]\n", name,mip->dev,mip->ino);
+    printf("search for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
     ip = &(mip->INODE);
 
     /*** search for name in mip's data blocks: ASSUME i_block[0] ONLY ***/
 
-    get_block(dev, ip->i_block[0], sbuf);
+    get_block(ip->i_block[0], sbuf);
     dp = (DIR *)sbuf;
     cp = sbuf;
     printf("  ino   rlen  nlen  name\n");
@@ -154,59 +151,85 @@ int search(MINODE *mip, char *name)
     return 0;
 }
 
-int getino(char *pathname)
+u32 getino(char *pathname)
 {
-    int i, ino, blk, offset;
-    char buf[BLKSIZE];
-    INODE *ip;
     MINODE *mip;
 
     printf("getino: pathname=%s\n", pathname);
-    if (strcmp(pathname, "/")==0)
+    if (strcmp(pathname, "/") == 0)
         return 2;
 
     // starting mip = root OR CWD
-    if (pathname[0]=='/')
+    if (pathname[0] == '/')
         mip = root;
     else
         mip = running->cwd;
 
     mip->refCount++;         // because we iput(mip) later
 
-    tokenize(pathname);
-
-    for (i=0; i<n; i++)
+    int n = tokenize(pathname);
+    int ino;
+    for (int i = 0; i < n; i++)
     {
         printf("===========================================\n");
         printf("getino: i=%d name[%d]=%s\n", i, i, name[i]);
 
         ino = search(mip, name[i]);
 
-        if (ino==0)
+        if (ino == 0)
         {
             iput(mip);
             printf("name %s does not exist\n", name[i]);
             return 0;
         }
         iput(mip);
-        mip = iget(dev, ino);
+        mip = iget(ino);
     }
 
     iput(mip);
     return ino;
 }
 
-// These 2 functions are needed for pwd()
-int findmyname(MINODE *parent, u32 myino, char myname[]) 
+// my_name[] should be size 256
+int findmyname(MINODE *parent, u32 my_ino, char my_name[]) 
 {
-    // WRITE YOUR code here
-    // search parent's data block for myino; SAME as search() but by myino
-    // copy its name STRING to myname[ ]
+    char buf[BLKSIZE];
+    char* cp = get_block(parent->INODE.i_block[0], buf);
+    while (cp < buf + BLKSIZE)
+    {
+        DIR* dp = (DIR*)cp;
+        if (dp->inode == my_ino)
+        {
+            int nMax = min(dp->name_len, 255);
+            strncpy(my_name, dp->name, nMax + 1);
+            my_name[nMax] = '\0';
+            return 1; // Found
+        }
+        cp += dp->rec_len;
+    }
+    return 0; // Not found
 }
 
-int findino(MINODE *mip, u32 *myino) // myino = i# of . return i# of ..
+// myino = i# of . | return i# of ..
+// mip points at a DIR minode
+u32 findino(MINODE* mip, u32* my_ino)
 {
-    // mip points at a DIR minode
-    // WRITE your code here: myino = ino of .  return ino of ..
-    // all in i_block[0] of this DIR INODE.
+    char buf[BLKSIZE];
+    char* cp = get_block(mip->INODE.i_block[0], buf);
+    DIR* dp = (DIR*)buf;
+    *my_ino = dp->inode;
+
+    cp += dp->rec_len;
+    dp = (DIR*)cp;
+    return dp->inode;
+}
+
+int min(int a, int b)
+{
+    return (a < b) ? a : b;
+}
+
+int max(int a, int b)
+{
+    return (a > b) ? a : b;
 }

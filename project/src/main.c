@@ -19,24 +19,21 @@ void init();
 void mount_root();
 void quit();
 
-const char *disk = "diskimage";
+const char* disk = "diskimage";
 
 int main(int argc, char* argv[])
 {
-    int ino;
     char buf[BLKSIZE];
 
     printf("checking EXT2 FS ...");
-    if ((fd = open(disk, O_RDWR)) < 0)
+    if ((dev = open(disk, O_RDWR)) < 0)
     {
         printf("open %s failed\n", disk);
         exit(1);
     }
 
-    dev = fd;    // global dev same as this fd   
-
     /********** read super block  ****************/
-    get_block(dev, 1, buf);
+    get_block(1, buf);
     sp = (SUPER *)buf;
 
     /* verify it's an ext2 file system ***********/
@@ -49,7 +46,7 @@ int main(int argc, char* argv[])
     ninodes = sp->s_inodes_count;
     nblocks = sp->s_blocks_count;
 
-    get_block(dev, 2, buf); 
+    get_block(2, buf); 
     gp = (GD *)buf;
 
     bmap = gp->bg_block_bitmap;
@@ -64,12 +61,12 @@ int main(int argc, char* argv[])
     printf("creating P0 as running process\n");
     running = &proc[0];
     running->status = READY;
-    running->cwd = iget(dev, 2);
+    running->cwd = iget(2);
     printf("root refCount = %d\n", root->refCount);
 
     // WRTIE code here to create P1 as a USER process
 
-    while(1)
+    while (1)
     {
         printf("input command : [ls|cd|pwd|quit] ");
         fgets(line, 128, stdin);
@@ -85,9 +82,9 @@ int main(int argc, char* argv[])
         if (strcmp(cmd, "ls") == 0)
             ls(pathname);
         else if (strcmp(cmd, "cd") == 0)
-            chdir(pathname);
+            cd(pathname);
         else if (strcmp(cmd, "pwd") == 0)
-            pwd(running->cwd);
+            pwd();
         else if (strcmp(cmd, "quit") == 0)
             quit();
     }
@@ -117,7 +114,7 @@ void init()
 void mount_root()
 {  
     LOG("mount_root");
-    root = iget(dev, 2);
+    root = iget(2);
 }
 
 void quit()
@@ -132,29 +129,3 @@ void quit()
     }
     exit(0);
 }
-
-int chdir(char *pathname)
-{
-    INODE * current;
-    if (pathname[0] == '/') //validate its a dir
-    {
-       current = root;
-       pathname++;
-	}
-    else{
-        current = cwd;
-	}
-    char * tok = strtok(path, "/"); //tokenize path
-    do
-    {
-     int num = search(current,tok);
-     if (num == 0)
-     {
-      return 0;
-	 }
-     current = getino(dev); //from global.h
-	} while (token = strtok(NULL,"/")); //continue until reach end
-    cwd = current;
-    return 1;//success
-}
-

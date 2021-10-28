@@ -16,6 +16,8 @@ extern int nblocks, ninodes, bmap, imap, iblk;
 
 extern char line[128], cmd[64], pathname[128];
 
+extern const char* disk;
+
 #define ROOT_INO 2
 
 #endif // GLOBAL_H

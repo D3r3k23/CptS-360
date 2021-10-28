@@ -83,9 +83,9 @@ int main(int argc, char* argv[])
         printf("cmd=%s pathname=%s\n", cmd, pathname);
     
         if (strcmp(cmd, "ls") == 0)
-            ls();
+            ls(pathname);
         else if (strcmp(cmd, "cd") == 0)
-            cd();
+            chdir(pathname);
         else if (strcmp(cmd, "pwd") == 0)
             pwd(running->cwd);
         else if (strcmp(cmd, "quit") == 0)
@@ -132,3 +132,29 @@ void quit()
     }
     exit(0);
 }
+
+int chdir(char *pathname)
+{
+    INODE * current;
+    if (pathname[0] == '/') //validate its a dir
+    {
+       current = root;
+       pathname++;
+	}
+    else{
+        current = cwd;
+	}
+    char * tok = strtok(path, "/"); //tokenize path
+    do
+    {
+     int num = search(current,tok);
+     if (num == 0)
+     {
+      return 0;
+	 }
+     current = getino(dev); //from global.h
+	} while (token = strtok(NULL,"/")); //continue until reach end
+    cwd = current;
+    return 1;//success
+}
+

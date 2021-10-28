@@ -1,5 +1,6 @@
 #include "util.h"
 
+#include "log.h"
 #include "global.h"
 
 #include <ext2fs/ext2_fs.h>
@@ -20,37 +21,16 @@ char* get_block(int blk, char* buf)
     lseek(dev, (long)blk*BLKSIZE, 0);
     read(dev, buf, BLKSIZE);
     return buf;
-}   
+}
 
 int put_block(int blk, char* buf)
 {
     lseek(dev, (long)blk*BLKSIZE, 0);
     return write(dev, buf, BLKSIZE);
-}   
-
-int tokenize(char *pathname)
-{
-    printf("tokenize %s\n", pathname);
-
-    strcpy(gpath, pathname); // tokens are in global gpath[ ]
-    int n = 0;
-    char* s = strtok(gpath, "/");
-    while (s)
-    {
-        name[n] = s;
-        n++;
-        s = strtok(0, "/");
-    }
-    name[n] = 0;
-
-    for (int i = 0; i < n; i++)
-        printf("%s  ", name[i]);
-    printf("\n");
-    return n;
 }
 
 // return minode pointer to loaded INODE
-MINODE *iget(int ino)
+MINODE *iget(u32 ino)
 {
     MINODE *mip;
     char buf[BLKSIZE];
@@ -85,7 +65,7 @@ MINODE *iget(int ino)
             //printf("iget: ino=%d blk=%d offset=%d\n", ino, blk, offset);
 
             get_block(blk, buf);
-            ip = (INODE *)buf + offset;
+            ip = (INODE*)buf + offset;
             // copy INODE to mp->INODE
             mip->INODE = *ip;
             return mip;
@@ -140,9 +120,9 @@ u32 search(MINODE *mip, char *name)
         strncpy(temp, dp->name, dp->name_len);
         temp[dp->name_len] = 0;
         printf("%4d  %4d  %4d    %s\n", dp->inode, dp->rec_len, dp->name_len, dp->name);
-        if (strcmp(temp, name)==0)
+        if (strcmp(temp, name) == 0)
         {
-            printf("found %s : ino = %d\n", temp, dp->inode);
+            LOG("found %s : ino = %d", temp, dp->inode);
             return dp->inode;
         }
         cp += dp->rec_len;
@@ -157,7 +137,7 @@ u32 getino(char *pathname)
 
     printf("getino: pathname=%s\n", pathname);
     if (strcmp(pathname, "/") == 0)
-        return 2;
+        return ROOT_INO;
 
     // starting mip = root OR CWD
     if (pathname[0] == '/')
@@ -165,7 +145,7 @@ u32 getino(char *pathname)
     else
         mip = running->cwd;
 
-    mip->refCount++;         // because we iput(mip) later
+    mip->refCount++; // because we iput(mip) later
 
     int n = tokenize(pathname);
     int ino;
@@ -179,7 +159,7 @@ u32 getino(char *pathname)
         if (ino == 0)
         {
             iput(mip);
-            printf("name %s does not exist\n", name[i]);
+            LOG("name %s does not exist", name[i]);
             return 0;
         }
         iput(mip);
@@ -222,6 +202,32 @@ u32 findino(MINODE* mip, u32* my_ino)
     cp += dp->rec_len;
     dp = (DIR*)cp;
     return dp->inode;
+}
+
+int tokenize(char *pathname)
+{
+    printf("tokenize %s\n", pathname);
+
+    strcpy(gpath, pathname); // tokens are in global gpath[ ]
+    int n = 0;
+    char* s = strtok(gpath, "/");
+    while (s)
+    {
+        name[n] = s;
+        n++;
+        s = strtok(NULL, "/");
+    }
+    name[n] = 0;
+
+    for (int i = 0; i < n; i++)
+        printf("%s  ", name[i]);
+    printf("\n");
+    return n;
+}
+
+int streq(const char* s1, const char* s2)
+{
+    return strcmp(s1, s2) == 0;
 }
 
 int min(int a, int b)

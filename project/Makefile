@@ -7,13 +7,16 @@ SRCS := $(shell find $(SRC_DIR) -name '*.c')
 OBJS := $(subst $(SRC_DIR), $(BUILD_DIR), $(SRCS:.c=.o))
 
 all : $(OBJS) $(EXE)
+	@echo "------ Finished ------"
 
 $(EXE) : $(OBJS) | $(BUILD_DIR)
-	@echo "make" $(EXE)
+	@echo "------ Make $(EXE) ------"
+	rm -f $(EXE)
 	gcc $(GCC_FLAGS) -o $(EXE) $(OBJS)
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIR)
-	@echo "make $(@)"
+	@echo "------ Make $(@) ------"
+	rm -f $@
 	gcc $(GCC_FLAGS) -c -o $@ $<
 
 $(BUILD_DIR):

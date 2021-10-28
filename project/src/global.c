@@ -1,7 +1,5 @@
 #include "global.h"
 
-#include <stddef.h>
-
 MINODE minode[NMINODE];
 MINODE* root;
 PROC proc[NPROC];
@@ -13,4 +11,4 @@ char* name[64];  // assume at most 64 components in pathname
 int dev=0;
 int nblocks=0, ninodes=0, bmap, imap=0, iblk=0;
 
-char line[128], cmd[32], pathname[128];
+char line[128], cmd[64], pathname[128];

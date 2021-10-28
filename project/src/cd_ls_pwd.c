@@ -1,10 +1,14 @@
 #include "cd_ls_pwd.h"
 
+#include "log.h"
 #include "global.h"
 #include "util.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <libgen.h>
+#include <sys/stat.h>
 
 void cd(char* pathname)
 {
@@ -37,41 +41,87 @@ void cd(char* pathname)
     // cwd = current;
 }
 
-void ls_file(MINODE *mip, char *name)
+void ls(char* pathname)
 {
-    printf("ls_file: to be done: READ textbook!!!!\n");
-    // READ Chapter 11.7.3 HOW TO ls
+    MINODE* mip;
+    if (!pathname)
+        mip = running->cwd;
+    else
+    {
+        u32 ino = getino(pathname);
+        if (ino == 0)
+        {
+            printf("Error: %s does not exist.\n", pathname);
+            return;
+        }
+        mip = iget(ino);
+    }
+
+    if (S_ISDIR(mip->INODE.i_mode))
+        ls_dir(mip);
+    else
+        ls_file(mip, pathname);
 }
 
-void ls_dir(MINODE *mip)
+void ls_dir(MINODE* mip)
 {
-    printf("ls_dir: list CWD's file names; YOU FINISH IT as ls -l\n");
-
-    char buf[BLKSIZE], temp[256];
-    DIR *dp;
-    char *cp;
-
-    get_block(mip->INODE.i_block[0], buf);
-    dp = (DIR *)buf;
-    cp = buf;
-    
+    char buf[BLKSIZE];
+    char *cp = get_block(mip->INODE.i_block[0], buf);
     while (cp < buf + BLKSIZE)
     {
-        strncpy(temp, dp->name, dp->name_len);
-        temp[dp->name_len] = 0;
+        DIR* dp = (DIR*)buf;
+
+        char name[256];
+        int nMax = min(dp->name_len, 255);
+        strncpy(name, dp->name, nMax + 1);
+        name[nMax] = '\0';
         
-        printf("%s  ", temp);
+        mip = iget(dp->inode);
+        ls_file(mip, name);
 
         cp += dp->rec_len;
-        dp = (DIR*)cp;
     }
     printf("\n");
 }
 
-void ls()
+void ls_file(MINODE* mip, char* name)
 {
-    printf("ls: list CWD only! YOU FINISH IT for ls pathname\n");
-    ls_dir(running->cwd);
+    static const char* modes = "rwxrwxrwx";
+
+    INODE* ip = &(mip->INODE);
+
+    if (S_ISREG(ip->i_mode))
+        printf("%c", '-');
+    if (S_ISDIR(ip->i_mode))
+        printf("%c", 'd');
+    if (S_ISLNK(ip->i_mode))
+        printf("%c", 'l');
+    
+    for (int i = 0; i < 9; i++)
+        if (ip->i_mode & (0x1 << (8 - i)))
+            printf("%c", modes[i]);
+        else
+            printf("%c", '-');
+    
+    printf("%4u ", ip->i_links_count);
+    printf("%4u ", ip->i_gid);
+    printf("%4u ", ip->i_uid);
+    printf("%4u ", ip->i_size);
+
+    char temp[128];
+
+    strcpy(temp, ctime((time_t*)&(ip->i_mtime)));
+    temp[strlen(temp)-1] = '\0'; // Trim NL
+    printf("%s ", temp);
+
+    strcpy(temp, name);
+    printf("%s", basename(temp));
+
+    char* linkname = (char*)(ip->i_block);
+    if (S_ISLNK(ip->i_mode))
+        printf(" -> %s", linkname);
+    
+    printf("\n");
 }
 
 void pwd()

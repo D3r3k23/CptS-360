@@ -4,9 +4,9 @@
 #include "type.h"
 
 void cd(char* pathname);
-void ls_file(MINODE *mip, char *name);
-void ls_dir(MINODE *mip);
-void ls();
+void ls(char* pathname);
+void ls_dir(MINODE* mip);
+void ls_file(MINODE* mip, char* name);
 void pwd();
 void rec_pwd(MINODE* wd);
 

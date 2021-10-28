@@ -14,6 +14,8 @@ extern char* name[64];  // assume at most 64 components in pathname
 extern int dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
 
-extern char line[128], cmd[32], pathname[128];
+extern char line[128], cmd[64], pathname[128];
+
+#define ROOT_INO 2
 
 #endif // GLOBAL_H

@@ -1,4 +1,5 @@
-**.vscode/
+**/.vscode/
+**/.VSCodeCounter
 
 *.o
 *.out

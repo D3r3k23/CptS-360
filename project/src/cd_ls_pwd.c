@@ -12,7 +12,7 @@
 
 void cd(char* pathname)
 {
-   /*int ino = getino(pathname);//returns error if ino = 0 
+   int ino = getino(pathname);//returns error if ino = 0 
    MINODE *mip = iget(ino);
    if(S_ISDIR(mip->INODE.i_mode)) //check if dir
    {
@@ -22,36 +22,13 @@ void cd(char* pathname)
    else
    {
    	printf("cd error: not a valid directory");
-   	return;
    }
-   */
-   MINODE * current;
-   if (pathname[0]=='/')
-   {
-	   current = root;
-	   pathname++;
-   }
-   else
-   {
-   	current = running->cwd;
-   }
-   char * tok = strtok(pathname,"/");
-   do {
-   	int num = search(current,tok);
-   	if (num == 0)
-   	{
-   		return 0;
-   	}
-   	current = getino(pathname);
-   } while (tok = strtok(NULL,"/"));
-   
-    running->cwd = current;
 }
 
 void ls(char* pathname)
 {
     MINODE* mip;
-    if (!pathname)
+    if (strlen(pathname) == 0)
         mip = running->cwd;
     else
     {
@@ -73,10 +50,10 @@ void ls(char* pathname)
 void ls_dir(MINODE* mip)
 {
     char buf[BLKSIZE];
-    char *cp = get_block(mip->INODE.i_block[0], buf);
+    char* cp = get_block(mip->INODE.i_block[0], buf);
     while (cp < buf + BLKSIZE)
     {
-        DIR* dp = (DIR*)buf;
+        DIR* dp = (DIR*)cp;
 
         char name[256];
         int nMax = min(dp->name_len, 255);
@@ -133,7 +110,7 @@ void ls_file(MINODE* mip, char* name)
 
 void pwd()
 {
-    MINODE *cwd = running->cwd;
+    MINODE* cwd = running->cwd;
     if (cwd == root)
         printf("/");
     else

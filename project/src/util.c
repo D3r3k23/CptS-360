@@ -204,6 +204,35 @@ u32 findino(MINODE* mip, u32* my_ino)
     return dp->inode;
 }
 
+DIR* read_dir(char* block, u32 size)
+{
+    static char* buf;
+    static u32 s_size;
+    static char* cp;
+
+    if (block)
+    {
+        cp = buf = block;
+        s_size = size;
+    }
+    else
+    {
+        if (buf)
+        {
+            if (cp >= buf + s_size)
+                cp += ((DIR*)cp)->rec_len;
+            else
+                return NULL;
+        }
+        else
+        {
+            LOG("Error: No block loaded");
+            return NULL;
+        }
+    }
+    return (DIR*)cp;
+}
+
 int tokenize(char *pathname)
 {
     printf("tokenize %s\n", pathname);

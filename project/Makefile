@@ -7,7 +7,6 @@ SRCS := $(shell find $(SRC_DIR) -name '*.c')
 OBJS := $(subst $(SRC_DIR), $(BUILD_DIR), $(SRCS:.c=.o))
 
 all : $(OBJS) $(EXE)
-	@echo "------ Finished ------"
 
 $(EXE) : $(OBJS) | $(BUILD_DIR)
 	@echo "------ Make $(EXE) ------"

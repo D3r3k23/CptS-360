@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     printf("creating P0 as running process\n");
     running = &proc[0];
     running->status = READY;
-    running->cwd = iget(2);
+    running->cwd = iget(ROOT_INO);
     printf("root refCount = %d\n", root->refCount);
 
 

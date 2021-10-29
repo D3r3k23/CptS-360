@@ -12,39 +12,23 @@
 
 void cd(char* pathname)
 {
-    // READ Chapter 11.7.3 HOW TO chdir
-
-    // if (!pathname)
-    // {
-
-    // }
-
-    // INODE * current;
-    // if (pathname[0] == '/') //validate its a dir
-    // {
-    //    current = root;
-    //    pathname++;
-	// }
-    // else{
-    //     current = cwd;
-	// }
-    // char * tok = strtok(path, "/"); //tokenize path
-    // do
-    // {
-    //  int num = search(current,tok);
-    //  if (num == 0)
-    //  {
-    //   return;
-	//  }
-    //  current = getino(dev); //from global.h
-	// } while (token = strtok(NULL,"/")); //continue until reach end
-    // cwd = current;
+   int ino = getino(pathname);//returns error if ino = 0 
+   MINODE *mip = iget(ino);
+   if(S_ISDIR(mip->INODE.i_mode)) //check if dir
+   {
+   	iput(running->cwd);
+   	running->cwd = mip;
+   }
+   else
+   {
+   	printf("cd error: not a valid directory");
+   }
 }
 
 void ls(char* pathname)
 {
     MINODE* mip;
-    if (!pathname)
+    if (strlen(pathname) == 0)
         mip = running->cwd;
     else
     {
@@ -66,10 +50,10 @@ void ls(char* pathname)
 void ls_dir(MINODE* mip)
 {
     char buf[BLKSIZE];
-    char *cp = get_block(mip->INODE.i_block[0], buf);
+    char* cp = get_block(mip->INODE.i_block[0], buf);
     while (cp < buf + BLKSIZE)
     {
-        DIR* dp = (DIR*)buf;
+        DIR* dp = (DIR*)cp;
 
         char name[256];
         int nMax = min(dp->name_len, 255);
@@ -126,7 +110,7 @@ void ls_file(MINODE* mip, char* name)
 
 void pwd()
 {
-    MINODE *cwd = running->cwd;
+    MINODE* cwd = running->cwd;
     if (cwd == root)
         printf("/");
     else

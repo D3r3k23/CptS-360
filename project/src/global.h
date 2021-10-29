@@ -3,6 +3,8 @@
 
 #include "type.h"
 
+// Defined in main.c
+
 extern MINODE minode[NMINODE];
 extern MINODE* root;
 extern PROC proc[NPROC];

@@ -13,8 +13,6 @@ u32 getino(char *pathname);
 int findmyname(MINODE *parent, u32 my_ino, char my_name[]);
 u32 findino(MINODE* mip, u32* my_ino);
 
-DIR* read_dir(char* block, u32 size);
-
 int tokenize(char *pathname);
 int streq(const char* s1, const char* s2);
 int min(int a, int b);

@@ -3,11 +3,11 @@
 
 #include "type.h"
 
-void cd(char* pathname);
-void ls(char* pathname);
+void cmd_cd(char* pathname);
+void cmd_ls(char* pathname);
 void ls_dir(MINODE* mip);
 void ls_file(MINODE* mip, char* name);
-void pwd();
+void cmd_pwd();
 void rec_pwd(MINODE* wd);
 
 #endif // CD_LS_PWD_H

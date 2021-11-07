@@ -10,7 +10,7 @@
 #include <libgen.h>
 #include <sys/stat.h>
 
-void cd(char* pathname)
+void cmd_cd(char* pathname)
 {
    int ino = getino(pathname);//returns error if ino = 0 
    MINODE *mip = iget(ino);
@@ -25,7 +25,7 @@ void cd(char* pathname)
    }
 }
 
-void ls(char* pathname)
+void cmd_ls(char* pathname)
 {
     MINODE* mip;
     if (strlen(pathname) == 0)
@@ -108,7 +108,7 @@ void ls_file(MINODE* mip, char* name)
     printf("\n");
 }
 
-void pwd()
+void cmd_pwd()
 {
     MINODE* cwd = running->cwd;
     if (cwd == root)

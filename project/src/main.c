@@ -2,7 +2,13 @@
 #include "log.h"
 #include "type.h"
 #include "util.h"
+
+// Commands
 #include "cd_ls_pwd.h"
+#include "mkdir_creat.h"
+#include "rmdir.h"
+#include "link_unlink.h"
+#include "symlink.h"
 
 #include <ext2fs/ext2_fs.h>
 
@@ -34,7 +40,7 @@ char line[128], cmd[64], pathname[128];
 
 void init();
 void mount_root();
-void quit();
+void cmd_quit();
 
 const char* disk = "diskimage";
 
@@ -61,20 +67,24 @@ int main(int argc, char* argv[])
         memset(cmd, 0, 64);
         memset(pathname, 0, 128);
 
-        printf("input command : [ls|cd|pwd|quit] ");
+        printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|readlink|quit]\n");
+        printf("Input command: ");
         fgets(line, 128, stdin);
 
         sscanf(line, "%s %s", cmd, pathname);
         LOG("cmd=%s pathname=%s", cmd, pathname);
     
-        if (streq(cmd, "ls"))
-            ls(pathname);
-        else if (streq(cmd, "cd"))
-            cd(pathname);
-        else if (streq(cmd, "pwd"))
-            pwd();
-        else if (streq(cmd, "quit"))
-            quit();
+        if      (streq(cmd, "ls"))       cmd_ls(pathname);
+        else if (streq(cmd, "cd"))       cmd_cd(pathname);
+        else if (streq(cmd, "pwd"))      cmd_pwd();
+        else if (streq(cmd, "mkdir"))    cmd_mkdir(pathname);
+        else if (streq(cmd, "creat"))    cmd_creat(pathname);
+        else if (streq(cmd, "rmdir"))    cmd_rmdir(pathname);
+        else if (streq(cmd, "link"))     cmd_link(pathname);
+        else if (streq(cmd, "unlink"))   cmd_unlink(pathname);
+        else if (streq(cmd, "symlink"))  cmd_symlink(pathname);
+        else if (streq(cmd, "readlink")) cmd_readlink(pathname);
+        else if (streq(cmd, "quit"))     cmd_quit();
     }
 }
 
@@ -137,7 +147,7 @@ void mount_root()
     root = iget(ROOT_INO);
 }
 
-void quit()
+void cmd_quit()
 {
     int i;
     MINODE *mip;

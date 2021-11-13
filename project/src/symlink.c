@@ -1,4 +1,16 @@
 #include "symlink.h"
+#include "type.h"
+
+#include "log.h"
+#include "global.h"
+#include "util.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <libgen.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 
 
 void cmd_symlink(char * old_file, char* new_file)

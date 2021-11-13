@@ -20,8 +20,10 @@ void inc_free_inodes(void);
 void dec_free_inodes(void);
 void inc_free_blocks(void);
 void dec_free_blocks(void);
+
 int ialloc(void);
 int balloc(void);
+void midalloc(MINODE* mip);
 
 int tokenize(char *pathname);
 int streq(const char* s1, const char* s2);

@@ -1,3 +1,4 @@
+//test
 #include "global.h"
 #include "log.h"
 #include "type.h"

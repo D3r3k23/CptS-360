@@ -86,28 +86,28 @@ void mkdir_impl(MINODE* pmip, char* name)
     // Add . & .. entries
     char buf[BLKSIZE];
     get_block(blk, buf);
-    DIR* dp = (DIR*)buf;
+    DIR* dp;
 
     // .
+    dp = (DIR*)buf;
     dp->inode = ino;
     dp->rec_len = 12;
     dp->name_len = 1;
+    dp->file_type = EXT2_FT_DIR;
     dp->name[0] = '.';
 
     // ..
+    dp = (DIR*)(buf + 12);
     dp->inode = pmip->ino;
     dp->rec_len = BLKSIZE - 12;
     dp->name_len = 2;
+    dp->file_type = EXT2_FT_DIR;
     dp->name[0] = '.';
     dp->name[1] = '.';
 
     put_block(blk, buf);
 
-    enter_name(pmip, ino, name);
-
-    pmip->INODE.i_atime = time(NULL);
-    pmip->dirty = 1;
-    iput(pmip);
+    enter_name(pmip, ino, name, EXT2_FT_DIR);
 }
 
 void cmd_creat(char* pathname)
@@ -148,8 +148,8 @@ void cmd_creat(char* pathname)
     }
 
     creat_impl(pmip, bName);
-    pmip->INODE.i_atime = time(NULL);
     pmip->dirty = 1;
+    pmip->INODE.i_atime = time(NULL);
     iput(pmip);
 }
 
@@ -180,14 +180,10 @@ void creat_impl(MINODE* pmip, char* name)
     mip->dirty = 1;
     iput(mip);
 
-    enter_name(pmip, ino, name);
-
-    pmip->INODE.i_atime = time(NULL);
-    pmip->dirty = 1;
-    iput(pmip);
+    enter_name(pmip, ino, name, EXT2_FT_REG_FILE);
 }
 
-void enter_name(MINODE* pmip, u32 ino, char* name)
+void enter_name(MINODE* pmip, u32 ino, char* name, int file_type)
 {
     int name_ideal_length = 4 * ((8 + strlen(name) + 3) / 4);
 
@@ -208,7 +204,7 @@ void enter_name(MINODE* pmip, u32 ino, char* name)
             dp = (DIR*)cp;            
         }
 
-        int ideal_length = 4 * ((8 - dp->name_len + 3) / 4);
+        int ideal_length = 4 * ((8 + strlen(name) + 3) / 4);
         int remaining = dp->rec_len - ideal_length;
 
         if (name_ideal_length < remaining)
@@ -218,9 +214,10 @@ void enter_name(MINODE* pmip, u32 ino, char* name)
             dp = (DIR*)cp;
 
             dp->inode = ino;
-            strcpy(dp->name, name);
             dp->name_len = strlen(name);
             dp->rec_len = remaining;
+            dp->file_type = file_type;
+            strcpy(dp->name, name);
 
             put_block(blk, buf);
             return;

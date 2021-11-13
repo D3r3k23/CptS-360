@@ -9,6 +9,6 @@ void mkdir_impl(MINODE* pmip, char* name);
 void cmd_creat(char* pathname);
 void creat_impl(MINODE* pmip, char* name);
 
-void enter_name(MINODE* pmip, u32 ino, char* name);
+void enter_name(MINODE* pmip, u32 ino, char* name, int file_type);
 
 #endif // MKDIR_CREAT_H

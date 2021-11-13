@@ -53,7 +53,7 @@ MINODE *iget(u32 ino)
         if (mip->refCount && mip->dev == dev && mip->ino == ino)
         {
             mip->refCount++;
-            //printf("found [%d %d] as minode[%d] in core\n", dev, ino, i);
+            // LOG("found [%d %d] as minode[%d] in core", dev, ino, i);
             return mip;
         }
     }
@@ -63,7 +63,7 @@ MINODE *iget(u32 ino)
         mip = &minode[i];
         if (mip->refCount == 0)
         {
-            //printf("allocating NEW minode[%d] for [%d %d]\n", i, dev, ino);
+            // LOG("allocating NEW minode[%d] for [%d %d]", i, dev, ino);
             mip->refCount = 1;
             mip->dev = dev;
             mip->ino = ino;
@@ -72,7 +72,7 @@ MINODE *iget(u32 ino)
             blk    = (ino-1)/8 + iblk;
             offset = (ino-1) % 8;
 
-            //printf("iget: ino=%d blk=%d offset=%d\n", ino, blk, offset);
+            // LOG("iget: ino=%d blk=%d offset=%d", ino, blk, offset);
 
             get_block(blk, buf);
             ip = (INODE*)buf + offset;
@@ -81,7 +81,7 @@ MINODE *iget(u32 ino)
             return mip;
         }
     }   
-    printf("PANIC: no more free minodes\n");
+    LOG("PANIC: no more free minodes");
     return 0;
 }
 
@@ -116,6 +116,7 @@ void iput(MINODE *mip)
    *ip = mip->INODE;
 
    put_block(block, buf);
+   midalloc(mip);
 } 
 
 u32 search(MINODE *mip, char *name)
@@ -305,6 +306,11 @@ int balloc(void)
     }
     LOG("Error: No free blocks");
     return 0;
+}
+
+void midalloc(MINODE* mip)
+{
+    mip->refCount = 0;
 }
 
 int tokenize(char *pathname)

@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
     running->cwd = iget(ROOT_INO);
     printf("root refCount = %d\n", root->refCount);
 
-
     // WRTIE code here to create P1 as a USER process
 
     

@@ -1,4 +1,3 @@
 scripts/mkdisk
 make clean
 make
-build/a.out

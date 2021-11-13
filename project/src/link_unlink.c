@@ -32,21 +32,20 @@ void cmd_link(char *old_file, char *new_file)
 		iput(omip);
 		return 0;
 	}
-	else{
-		if(getino(new_file)==0)
-		{
+	if(getino(new_file)==0)
+	{
 		//creat new_file with the same inode number of oldfile:
-			char *parent = dirname(new_file);
-			char *child = basename(new_file);
-			int pino = getino(parent);
+		char *parent = dirname(new_file);
+		char *child = basename(new_file);
+		int pino = getino(parent);
 
-			MINODE *pmip = iget(pino);
-			//creat entry in new parent DIR with same inode numer of old_file
-			enter_name(pmip,oino,child);
-			omip->INODE.i_links_count++; //inc INODE's links_count by 1
-			omip->dirty = 1; //for write back by iput(omip)
-			iput(omip);
-			iput(pmip);
+		MINODE *pmip = iget(pino);
+		//creat entry in new parent DIR with same inode numer of old_file
+		enter_name(pmip,oino,child);
+		omip->INODE.i_links_count++; //inc INODE's links_count by 1
+		omip->dirty = 1; //for write back by iput(omip)
+		iput(omip);
+		iput(pmip);
 		}
 	}
 }
@@ -66,18 +65,7 @@ void cmd_unlink(char * filename)
 		printf("Error: file cannot be a DIR");
 		iput(mip);
 		return 0;
-	}
-	else
-	{
-		//remove name entry from parents DIR data block
-		char *parent = dirname(filename);
-		char *child = basename(filename);
-		int pino = getino(parent);
-		MINODE *pmip = iget(pino);
-		rm_child(pmip,ino,child);
-		pmip->dirty = 1;
-		iput(pmip);
-	}
+	}	
 
 	//decrement INODE's link_count by 1
 	mip->INODE.i_links_count--;
@@ -92,6 +80,13 @@ void cmd_unlink(char * filename)
 		
 		
 	}
+	char *parent = dirname(filename);
+	char *child = basename(filename);
+	int pino = getino(parent);
+	MINODE *pmip = iget(pino);
+	rm_child(pmip,ino,child);
+	pmip->dirty = 1;
+	iput(pmip);
 	iput(mip); //release mip
 
 

@@ -1,2 +1,3 @@
+make
 sudo scripts/mkdisk
 sudo build/a.out

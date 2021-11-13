@@ -21,7 +21,7 @@ void cmd_symlink(char * old_file, char* new_file)
 	if(!oino) //check if inode exists
 	{
 		printf("Error: source path does not exist\n");
-		return 0;
+		return;
 	}
 
 	int ino = getino(new_file);
@@ -37,10 +37,9 @@ void cmd_symlink(char * old_file, char* new_file)
 	char *child = basename(new_file);
 	int pino = getino(parent);
 	MINODE *pmip = iget(pino);
-	rm_child(pmip,ino,child);
+	// rm_child(pmip,ino,child);
 	pmip->dirty = 1; //mark new_file parent minode dirty;
 	iput(pmip);
-	iput(pino);
 }
 
 void cmd_readlink(char *pathname)
@@ -52,7 +51,7 @@ void cmd_readlink(char *pathname)
 		if(!ino) //checks if the inode exists
 		{
 			printf("source path does not exist\n");
-			return 0;
+			return;
 		}
 	
 		MINODE *mip = iget(ino);
@@ -60,7 +59,7 @@ void cmd_readlink(char *pathname)
 		if(!S_ISLNK(mip->INODE.i_mode)) //checks if the inode is a LNK
 		{
 			printf("path is not a LNK\n"); //if the inode is not a LNK file, return
-			return 0;
+			return;
 		}
 	
 		printf("%s\n", (char *) (mip->INODE.i_block));

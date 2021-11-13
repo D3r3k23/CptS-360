@@ -4,6 +4,7 @@
 #include "log.h"
 #include "global.h"
 #include "util.h"
+#include "mkdir_creat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +23,7 @@ void cmd_link(char *old_file, char *new_file)
 	if (!oino)
 	{
 		printf("Error: old_file does not exist\n");
-		return 0;
+		return;
 	}
 	MINODE *omip = iget(oino);
 	//check omip->INODE file type (must not be DIR)
@@ -30,7 +31,7 @@ void cmd_link(char *old_file, char *new_file)
 	{
 		printf("Error: old_file is a DIR");
 		iput(omip);
-		return 0;
+		return;
 	}
 	else{
 		if(getino(new_file)==0)
@@ -42,7 +43,7 @@ void cmd_link(char *old_file, char *new_file)
 
 			MINODE *pmip = iget(pino);
 			//creat entry in new parent DIR with same inode numer of old_file
-			enter_name(pmip,oino,child);
+			enter_name(pmip,oino,child,EXT2_FT_REG_FILE);
 			omip->INODE.i_links_count++; //inc INODE's links_count by 1
 			omip->dirty = 1; //for write back by iput(omip)
 			iput(omip);
@@ -57,7 +58,7 @@ void cmd_unlink(char * filename)
 	if(!ino) // check if inode exists
 	{
 		printf("path does not exist\n");
-		return 0;
+		return;
 	}
 	MINODE *mip = iget(ino);
 	//check its a REG or symbolic LNK file; cannot be a DIR
@@ -65,7 +66,7 @@ void cmd_unlink(char * filename)
 	{
 		printf("Error: file cannot be a DIR");
 		iput(mip);
-		return 0;
+		return;
 	}
 	else
 	{
@@ -74,7 +75,7 @@ void cmd_unlink(char * filename)
 		char *child = basename(filename);
 		int pino = getino(parent);
 		MINODE *pmip = iget(pino);
-		rm_child(pmip,ino,child);
+		// rm_child(pmip,ino,child);
 		pmip->dirty = 1;
 		iput(pmip);
 	}

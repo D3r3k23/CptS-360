@@ -57,7 +57,7 @@ MINODE *iget(u32 ino)
             return mip;
         }
     }
-
+    /////// TEST
     for (int i = 0; i < NMINODE; i++)
     {
         mip = &minode[i];

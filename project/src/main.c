@@ -80,9 +80,19 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "mkdir"))    cmd_mkdir(pathname);
         else if (streq(cmd, "creat"))    cmd_creat(pathname);
         else if (streq(cmd, "rmdir"))    cmd_rmdir(pathname);
-        else if (streq(cmd, "link"))     cmd_link(pathname);
+        else if (streq(cmd, "link"))   
+        {
+        	char *new_file = strtok(pathname," ");
+        	char *old_file = strtok(pathname,"\n");
+        	cmd_link(new_file, old_file);
+        }  
         else if (streq(cmd, "unlink"))   cmd_unlink(pathname);
-        else if (streq(cmd, "symlink"))  cmd_symlink(pathname);
+        else if (streq(cmd, "symlink"))
+        {
+        	char *new_file = strtok(pathname," ");
+        	char *old_file = strtok(pathname,"\n");
+        	cmd_symlink(new_file, old_file);
+        }  
         else if (streq(cmd, "readlink")) cmd_readlink(pathname);
         else if (streq(cmd, "quit"))     cmd_quit();
     }

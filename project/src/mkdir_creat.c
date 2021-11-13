@@ -50,7 +50,10 @@ void cmd_mkdir(char* pathname)
     }
 
     mkdir_impl(pmip, bName);
+    pmip->INODE.i_links_count++;
+    pmip->INODE.i_atime = time(NULL);
     pmip->dirty = 1;
+    iput(pmip);
 }
 
 void mkdir_impl(MINODE* pmip, char* name)
@@ -70,7 +73,7 @@ void mkdir_impl(MINODE* pmip, char* name)
     ip->i_links_count = 2; // . & ..
     ip->i_atime = time(NULL);
     ip->i_ctime = time(NULL);
-    ip->i_mtime - time(NULL);
+    ip->i_mtime = time(NULL);
     ip->i_blocks = 2;
 
     ip->i_block[0] = blk;
@@ -95,7 +98,8 @@ void mkdir_impl(MINODE* pmip, char* name)
     dp->inode = pmip->ino;
     dp->rec_len = BLKSIZE - 12;
     dp->name_len = 2;
-    strncpy(dp->name, "..", 2);
+    dp->name[0] = '.';
+    dp->name[1] = '.';
 
     put_block(blk, buf);
 
@@ -144,6 +148,9 @@ void cmd_creat(char* pathname)
     }
 
     creat_impl(pmip, bName);
+    pmip->INODE.i_atime = time(NULL);
+    pmip->dirty = 1;
+    iput(pmip);
 }
 
 void creat_impl(MINODE* pmip, char* name)
@@ -163,7 +170,7 @@ void creat_impl(MINODE* pmip, char* name)
     ip->i_links_count = 1;
     ip->i_atime = time(NULL);
     ip->i_ctime = time(NULL);
-    ip->i_mtime - time(NULL);
+    ip->i_mtime = time(NULL);
     ip->i_blocks = 2;
 
     ip->i_block[0] = blk;
@@ -208,7 +215,7 @@ void enter_name(MINODE* pmip, u32 ino, char* name)
         {
             dp->rec_len = ideal_length;
             cp += dp->rec_len;
-            cp = (DIR*)cp;
+            dp = (DIR*)cp;
 
             dp->inode = ino;
             strcpy(dp->name, name);

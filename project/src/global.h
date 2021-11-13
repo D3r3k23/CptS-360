@@ -20,6 +20,7 @@ extern char line[128], cmd[64], pathname[128];
 
 extern const char* disk;
 
+#define SUPER_INO 1
 #define ROOT_INO 2
 
 #endif // GLOBAL_H

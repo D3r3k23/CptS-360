@@ -12,17 +12,17 @@
 
 void cmd_cd(char* pathname)
 {
-   int ino = getino(pathname);//returns error if ino = 0 
-   MINODE *mip = iget(ino);
-   if(S_ISDIR(mip->INODE.i_mode)) //check if dir
-   {
-   	iput(running->cwd);
-   	running->cwd = mip;
-   }
-   else
-   {
-   	printf("cd error: not a valid directory");
-   }
+    int ino = getino(pathname);//returns error if ino = 0 
+    MINODE *mip = iget(ino);
+    if(S_ISDIR(mip->INODE.i_mode)) //check if dir
+    {
+        iput(running->cwd);
+        running->cwd = mip;
+    }
+    else
+    {
+        printf("cd error: not a valid directory");
+    }
 }
 
 void cmd_ls(char* pathname)
@@ -65,7 +65,6 @@ void ls_dir(MINODE* mip)
 
         cp += dp->rec_len;
     }
-    printf("\n");
 }
 
 void ls_file(MINODE* mip, char* name)
@@ -87,10 +86,10 @@ void ls_file(MINODE* mip, char* name)
         else
             printf("%c", '-');
     
-    printf("%4u ", ip->i_links_count);
-    printf("%4u ", ip->i_gid);
-    printf("%4u ", ip->i_uid);
-    printf("%4u ", ip->i_size);
+    printf("%2u ", ip->i_links_count);
+    printf("%2u ", ip->i_gid);
+    printf("%2u ", ip->i_uid);
+    printf("%6u ", ip->i_size);
 
     char temp[128];
 

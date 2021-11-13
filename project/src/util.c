@@ -16,6 +16,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+int tst_bit(char* buf, int bit)
+{
+    return buf[bit / 8] & (1 << (bit % 8));
+}
+
+void set_bit(char* buf, int bit)
+{
+    buf[bit / 8] |= (1 << (bit % 8));
+}
+
 char* get_block(int blk, char* buf)
 {
     lseek(dev, (long)blk*BLKSIZE, 0);
@@ -80,14 +90,12 @@ void iput(MINODE *mip)
     if (!mip)
         return;
 
-    int block, offset;
-    char buf[BLKSIZE];
-    INODE *ip;
-
     mip->refCount--;
 
-    if (mip->refCount > 0) return;
-    if (!mip->dirty)       return;
+    if (mip->refCount > 0)
+        return;
+    if (!mip->dirty)
+        return;
 
     /* write INODE back to disk */
     /**************** NOTE ******************************
@@ -97,6 +105,17 @@ void iput(MINODE *mip)
 
     Write YOUR code here to write INODE back to disk
     *****************************************************/
+
+   int block  = (mip->ino - 1) / 8 + iblk;
+   int offset = (mip->ino - 1) % 8;
+
+   char buf[BLKSIZE];
+   get_block(block, buf);
+
+   INODE* ip = (INODE*)buf + offset;
+   *ip = mip->INODE;
+
+   put_block(block, buf);
 } 
 
 u32 search(MINODE *mip, char *name)
@@ -202,6 +221,90 @@ u32 findino(MINODE* mip, u32* my_ino)
     cp += dp->rec_len;
     dp = (DIR*)cp;
     return dp->inode;
+}
+
+void inc_free_inodes(void)
+{
+
+}
+
+void dec_free_inodes(void)
+{
+    char buf[BLKSIZE];
+
+    get_block(SUPER_INO, buf);
+    SUPER* sp = (SUPER*)buf;
+    sp->s_free_inodes_count--;
+    put_block(SUPER_INO, buf);
+
+    get_block(ROOT_INO, buf);
+    GD* gp = (GD*)buf;
+    gp->bg_free_inodes_count--;
+    put_block(ROOT_INO, buf);
+}
+
+void inc_free_blocks(void)
+{
+
+}
+
+void dec_free_blocks(void)
+{
+    char buf[BLKSIZE];
+
+    get_block(SUPER_INO, buf);
+    SUPER* sp = (SUPER*)buf;
+    sp->s_free_blocks_count--;
+    put_block(SUPER_INO, buf);
+
+    get_block(ROOT_INO, buf);
+    GD* gp = (GD*)buf;
+    gp->bg_free_blocks_count--;
+    put_block(ROOT_INO, buf);
+}
+
+int ialloc(void)
+{
+    char buf[BLKSIZE];
+    get_block(imap, buf);
+
+    for (int i = 0; i < ninodes; i++)
+    {
+        if (!tst_bit(buf, i))
+        {
+            set_bit(buf, i);
+            put_block(imap, buf);
+
+            dec_free_inodes();
+            u32 ino = i + 1;
+            LOG("Allocated inode %d", ino);
+            return ino;
+        }
+    }
+    LOG("Error: No free inodes");
+    return 0;
+}
+
+int balloc(void)
+{
+    char buf[BLKSIZE];
+    get_block(bmap, buf);
+
+    for (int i = 0; i < nblocks; i++)
+    {
+        if (!tst_bit(buf, i))
+        {
+            set_bit(buf, i);
+            put_block(bmap, buf);
+
+            dec_free_blocks();
+            u32 blk = i + 1;
+            LOG("Allocated block %d", blk);
+            return i + 1;
+        }
+    }
+    LOG("Error: No free blocks");
+    return 0;
 }
 
 int tokenize(char *pathname)

@@ -1,3 +1,4 @@
+//test
 #include "global.h"
 #include "log.h"
 #include "type.h"
@@ -34,8 +35,6 @@ char* name[64];  // assume at most 64 components in pathname
 int dev=0;
 int nblocks=0, ninodes=0, bmap, imap=0, iblk=0;
 
-char line[128], cmd[64], pathname[128];
-
 //---------------------//
 
 void init();
@@ -60,29 +59,33 @@ int main(int argc, char* argv[])
 
     
 
+
+    char line[256], cmd[64], pathname1[128], pathname2[128];
+    
     while (1)
     {
-        memset(line, 0, 128);
+        memset(line, 0, 256);
         memset(cmd, 0, 64);
-        memset(pathname, 0, 128);
+        memset(pathname1, 0, 128);
+        memset(pathname2, 0, 128);
 
         printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|readlink|quit]\n");
         printf("Input command: ");
         fgets(line, 128, stdin);
 
-        sscanf(line, "%s %s", cmd, pathname);
-        LOG("cmd=%s pathname=%s", cmd, pathname);
+        sscanf(line, "%s %s %s", cmd, pathname1, pathname2);
+        LOG("cmd=%s pathname1=%s pathname2=%s", cmd, pathname1, pathname2);
     
-        if      (streq(cmd, "ls"))       cmd_ls(pathname);
-        else if (streq(cmd, "cd"))       cmd_cd(pathname);
+        if      (streq(cmd, "ls"))       cmd_ls(pathname1);
+        else if (streq(cmd, "cd"))       cmd_cd(pathname1);
         else if (streq(cmd, "pwd"))      cmd_pwd();
-        else if (streq(cmd, "mkdir"))    cmd_mkdir(pathname);
-        else if (streq(cmd, "creat"))    cmd_creat(pathname);
-        else if (streq(cmd, "rmdir"))    cmd_rmdir(pathname);
-        else if (streq(cmd, "link"))     cmd_link(pathname);
-        else if (streq(cmd, "unlink"))   cmd_unlink(pathname);
-        else if (streq(cmd, "symlink"))  cmd_symlink(pathname);
-        else if (streq(cmd, "readlink")) cmd_readlink(pathname);
+        else if (streq(cmd, "mkdir"))    cmd_mkdir(pathname1);
+        else if (streq(cmd, "creat"))    cmd_creat(pathname1);
+        else if (streq(cmd, "rmdir"))    cmd_rmdir(pathname1);
+        else if (streq(cmd, "link"))     cmd_link(pathname1, pathname2);
+        else if (streq(cmd, "unlink"))   cmd_unlink(pathname1);
+        else if (streq(cmd, "symlink"))  cmd_symlink(pathname1, pathname2);
+        else if (streq(cmd, "readlink")) cmd_readlink(pathname1);
         else if (streq(cmd, "quit"))     cmd_quit();
     }
 }

@@ -26,6 +26,11 @@ void set_bit(char* buf, int bit)
     buf[bit / 8] |= (1 << (bit % 8));
 }
 
+void clr_bit(char* buf, int bit)
+{
+    buf[bit / 8] &= ~(1 << (bit % 8));
+}
+
 char* get_block(int blk, char* buf)
 {
     lseek(dev, (long)blk*BLKSIZE, 0);
@@ -116,7 +121,7 @@ void iput(MINODE *mip)
    *ip = mip->INODE;
 
    put_block(block, buf);
-   midalloc(mip);
+   midalloc(mip); //
 } 
 
 u32 search(MINODE *mip, char *name)
@@ -217,7 +222,9 @@ u32 findino(MINODE* mip, u32* my_ino)
     char buf[BLKSIZE];
     char* cp = get_block(mip->INODE.i_block[0], buf);
     DIR* dp = (DIR*)buf;
-    *my_ino = dp->inode;
+
+    if (my_ino)
+        *my_ino = dp->inode;
 
     cp += dp->rec_len;
     dp = (DIR*)cp;
@@ -226,7 +233,17 @@ u32 findino(MINODE* mip, u32* my_ino)
 
 void inc_free_inodes(void)
 {
+    char buf[BLKSIZE];
 
+    get_block(SUPER_INO, buf);
+    SUPER* sp = (SUPER*)buf;
+    sp->s_free_inodes_count++;
+    put_block(SUPER_INO, buf);
+
+    get_block(ROOT_INO, buf);
+    GD* gp = (GD*)buf;
+    gp->bg_free_inodes_count++;
+    put_block(ROOT_INO, buf);
 }
 
 void dec_free_inodes(void)
@@ -246,7 +263,17 @@ void dec_free_inodes(void)
 
 void inc_free_blocks(void)
 {
+    char buf[BLKSIZE];
 
+    get_block(SUPER_INO, buf);
+    SUPER* sp = (SUPER*)buf;
+    sp->s_free_blocks_count++;
+    put_block(SUPER_INO, buf);
+
+    get_block(ROOT_INO, buf);
+    GD* gp = (GD*)buf;
+    gp->bg_free_blocks_count++;
+    put_block(ROOT_INO, buf);
 }
 
 void dec_free_blocks(void)
@@ -313,6 +340,40 @@ void midalloc(MINODE* mip)
     mip->refCount = 0;
 }
 
+void idalloc(u32 ino)
+{
+    if (ino > ninodes)
+    {
+        LOG("Inode %d out of range", ino);
+        return;
+    }
+
+    char buf[BLKSIZE];
+    get_block(imap, buf);
+
+    clr_bit(buf, ino - 1);
+    put_block(imap, buf);
+
+    inc_free_inodes();
+}
+
+void bdalloc(int blk)
+{
+    if (blk > nblocks)
+    {
+        LOG("Block %d out of range", blk);
+        return;
+    }
+
+    char buf[BLKSIZE];
+    get_block(bmap, buf);
+
+    clr_bit(buf, blk - 1);
+    put_block(bmap, buf);
+
+    inc_free_blocks();
+}
+
 int tokenize(char *pathname)
 {
     printf("tokenize %s\n", pathname);
@@ -347,4 +408,36 @@ int min(int a, int b)
 int max(int a, int b)
 {
     return (a > b) ? a : b;
+}
+
+int is_empty(MINODE* mip)
+{
+    INODE* ip = &mip->INODE;
+
+    if (ip->i_links_count > 2)
+        return 0;
+
+    else if (ip->i_links_count == 2)
+        for (int i = 0; i < 12; i++)
+            if (ip->i_block[i])
+            {
+                char buf[BLKSIZE];
+                char* cp = get_block(ip->i_block[i], buf);
+
+                while (cp < buf + BLKSIZE)
+                {
+                    DIR* dp = (DIR*)cp;
+
+                    char name[256];
+                    strncpy(name, dp->name, dp->name_len);
+                    name[dp->name_len] = '\0';
+
+                    if (strcmp(name, ".") != 0 && strcmp(name, "..") != 0)
+                        return 0;
+                    
+                    cp += dp->rec_len;
+                }
+            }
+
+    return 1;
 }

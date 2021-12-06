@@ -5,6 +5,7 @@
 
 int tst_bit(char* buf, int bit);
 void set_bit(char* buf, int bit);
+void clr_bit(char* buf, int bit);
 
 char* get_block(int blk, char* buf);
 int put_block(int blk, char* buf);
@@ -25,9 +26,14 @@ int ialloc(void);
 int balloc(void);
 void midalloc(MINODE* mip);
 
+void idalloc(u32 ino);
+void bdalloc(int blk);
+
 int tokenize(char *pathname);
 int streq(const char* s1, const char* s2);
 int min(int a, int b);
 int max(int a, int b);
+
+int is_empty(MINODE* mip);
 
 #endif // UTIL_H

@@ -64,9 +64,7 @@ int main(int argc, char* argv[])
     printf("root refCount = %d\n", root->refCount);
 
     // WRTIE code here to create P1 as a USER process
-
-    
-
+    // (Level 3)
 
     char line[256], cmd[64], pathname1[128], pathname2[128];
     
@@ -94,6 +92,7 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "unlink"))   cmd_unlink(pathname1);
         else if (streq(cmd, "symlink"))  cmd_symlink(pathname1, pathname2);
         else if (streq(cmd, "readlink")) cmd_readlink(pathname1);
+        else if (streq(cmd, "pfd"))      cmd_pfd();
         else if (streq(cmd, "cat"))      cmd_cat(pathname1);
         else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
         else if (streq(cmd, "quit"))     cmd_quit();
@@ -151,6 +150,8 @@ void init(const char* disk)
         proc[i].uid = 0;
         proc[i].gid = 0;
         proc[i].cwd = 0;
+        for (int j = 0; j < NFD; j++)
+            proc[i].fd[j] = NULL;
     }
 }
 

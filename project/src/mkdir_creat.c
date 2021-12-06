@@ -128,7 +128,7 @@ void cmd_creat(char* pathname)
     strcpy(bName, basename(temp));
 
     u32 pino = getino(dName);
-    if (pino == 0) // Check if parent inode exists
+    if (!pino) // Check if parent inode exists
     {
         printf("Error: %s does not exist\n", dName);
         return;

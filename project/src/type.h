@@ -16,8 +16,17 @@ typedef struct ext2_dir_entry_2 DIR;
 #define READY 1
 
 #define BLKSIZE  1024
-#define NMINODE   128
-#define NPROC       2
+#define NMINODE  128
+#define NPROC    2
+#define NFD      16
+
+typedef enum f_mode
+{
+    RD = 0,
+    WR = 1,
+    RW = 2,
+    AP = 3
+} F_MODE;
 
 typedef struct minode
 {
@@ -30,15 +39,24 @@ typedef struct minode
     struct mntable *mptr; // for level-3
 } MINODE;
 
+typedef struct oft // Open file table
+{
+    F_MODE mode;
+    int refCount;
+    MINODE* mip;
+    int offset;
+} OFT;
+
 typedef struct proc
 {
     struct proc* next;
-    int          pid;  // process ID  
+    int          pid;  // process ID
     int          ppid; // parent ID?
     int          status;
     int          uid; // user ID
     int          gid;
-    MINODE*      cwd; // CWD directory pointer  
+    MINODE*      cwd; // CWD directory pointer
+    OFT*         fd[NFD];
 } PROC;
 
 #endif // TYPE_H

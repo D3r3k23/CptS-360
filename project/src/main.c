@@ -9,6 +9,9 @@
 #include "rmdir.h"
 #include "link_unlink.h"
 #include "symlink.h"
+#include "open_close.h"
+#include "read_cat.h"
+#include "write_cp.h"
 
 #include <ext2fs/ext2_fs.h>
 
@@ -83,6 +86,8 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "unlink"))   cmd_unlink(pathname);
         else if (streq(cmd, "symlink"))  cmd_symlink(pathname);
         else if (streq(cmd, "readlink")) cmd_readlink(pathname);
+        else if (streq(cmd, "cat"))      cmd_cat(pathname);
+        else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
         else if (streq(cmd, "quit"))     cmd_quit();
     }
 }

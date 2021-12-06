@@ -1,1 +1,1 @@
-# WSU CptS 360 Systems Programming assignments
+# WSU CptS 360 Systems Programming Assignments

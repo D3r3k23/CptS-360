@@ -1,0 +1,164 @@
+                CS360 Final Project Demo Instrations
+
+DATE and TIME: 12-8-2021 and 12-9-2021; evenings 
+
+
+
+ 1. Organize YOUR source code to contain the following files: NO EXCEPTIONs!!!
+   
+   level-1:
+      type.h, util.c (as posted)
+      main.c         : initilization, mountroot, command processing loop
+      cd_ls_pwd.c    : ls, cd, pwd 
+      mkdir_creat.c  : mkdir, creat, enter_name
+      rmdir.c        : rmdir, rm_child 
+      link_unlink.c  : link, unlink
+      symlink.c      : symlink, readlink
+
+   level-2:
+      open_close.c   : open, close, lseek, pfd
+      read_cat.c     : read, cat 
+      write_cp.c     : write, cp 
+   
+   level-3:
+      mount_umount.c : mount, umount
+      modified getino(), pwd() for cross mounting points
+      modified rmdir(), unlink() to check permission
+
+Submit a NAMEs.zip file to TA BEFORE the DEMO time, where NAMEs are LASTnames
+of all team members, e.g. adam.smith.zip        
+
+ 
+WARNING: academic honesty: absolutely NO COPYING !!!
+
+
+Interview with KCW via ZOOM immediately following YOUR demo with TA
+
+
+In order to speed up the interview, please be ready to show your code:
+
+
+LEVEL-1:
+  mkdir: enter_name()
+  rmdir: rm_child()
+  link : the link code
+
+LEVEL-2:
+read:  Indirect and Double Indirect data blocks; optimization code
+write: Indirect and Double Indirect data blocks; optimization code
+
+LEVL-3:
+Cross mounting point code in (YOUR modified) getino(), pwd()
+
+All team members must be present during interview with KCW.
+   Prepare yourself for the interview by trying to EXPLAIN how did your code
+
+       mkdir  pathname
+       creat  pathname
+       link   f1 f2
+       unlink
+       symlink
+
+       open  file for R of W
+       how did you handle I, D blocks in read(), write()
+      
+       mount: what does it do?
+       how to cross mounting points DOWNward? UPward?
+
+NOTE: TO explain is NOT to read your code line by line !!!!! 
+
+EXAMPLE: how to mkdir?
+         First, try to SAY the major steps of mkdir:
+                1. checking: parent, child  
+                2. mymkdir
+                     allocate ino, bno;
+                     make a DIR INDOE on disk; disk block bno with . and ..
+                3.   enter child name into parent data block
+
+         If KCW wants more, he will ask: how to enter_name? etc.
+
+3. Download ALL files from samples/PROJECT/
+   Use the disk images mydisk, disk2, disk3 in your DEOM.
+
+   You may veiw the disk image contents by
+       show mydisk; show disk2; show disk3
+       showdisk2:   show file contents of disk2
+
+4. TO save DEMO time, run you project as 
+      a.out diskname
+   for different disk images
+
+5. DEMO RECORD: Copy/Paste the following DEMO record as a .txt file.
+   Fill in with your names and IDs. return it to TA before 12-8-2021.
+
+                This will be YOUR DEMO record.
+
+NAME__Henderson__ ID__11537179__  NAME_______________ ID______________
+
+0. Do EECS online course evaluation. 
+1. Fill in NAMEs, IDs. Return to TA before 12-8-2021.
+2. DEMO with TA at scheduled time AND submit a ZIP file of YOUR project to TA
+3. Immediately after demo to TA, get on KCW's ZOOM session for Interview.
+
+4. Download mydisk, disk2, disk3, dif2 from samples/PROJECT directory 
+
+LEVEL-1: Use mydisk                                             55 %
+   COMMANDS                    EXPECTED RESULTS           OBSERVED & comments
+------------------      ------------------------------  ----------------------
+startup & menu:          start up, show commands menu   ______________________
+ls                       show contents of / directory   ______________________
+
+mkdir /a ;     ls        show DIR /a exits; ls works    _______________________
+
+mkdir /a/b ;   ls /a     make dir with pathname         _______________________
+
+cd    /a/b ;   pwd       cd to a pathname, show CWD     ________________________
+
+cd    ../../ ; pwd       cd upward, show CWD            _______________________ 
+
+creat f1     ; ls        creat file, show f1 is a file  _______________________
+
+link  f1 f2;   ls        hard link, both linkCount=2    ________________________
+
+unlink   f1;   ls        unlink f1; f2 linkCount=1      ________________________
+
+symlink f2 f3; ls        symlink; ls show f3 -> f2      ________________________
+
+rmdir /a/b;    ls        rmdir and show results         ________________________
+  
+LEVEL-2: Use disk2: (file1,tiny,small,large,huge)             25 %
+------------------        ---------------------------   -----------------------
+cat large; cat huge       show contents to LAST LINE
+                           === END OF huge FILE ===   _________________________
+
+cp  large newlarge; ls    show they are SAME size     _________________________
+
+cp  huge  newhuge ; ls    show they are SAME size     _________________________
+
+              MUST DO THIS: exit YOUR project; 
+(In Linux): diff2         MUST not show any lines     _________________________ 
+
+============ IF can not do cat, cp: TRY to do these for LEVEL2 ================
+open  small 0;   pfd      show fd=0 opened for R      _________________________
+
+read 0 20;       pfd      show 20 chars read          _________________________
+
+open file1 1;    pfd      show fd=1 opened for W      _________________________
+
+write 1 "abcde"; ls       show file1 size=5           _________________________
+
+close 1; pfd              show fd=1 is closed         _________________________
+
+LEVEL-3: start with disk2;   MOUNT disk3                      20 %
+-------------------   ----------------------------  ----------------------------
+mount disk3 /mnt;         mount disk3.2 on /mnt      ___________________________
+
+ls /mnt                   contents of disk3          ___________________________
+
+cd /mnt/DIR1; pwd         show CWD is /mnt/DIR1      ___________________________
+
+mkdir ABC; ls             show ABC exits             ___________________________
+
+cd ../../;    pwd         show CWD=/                 ___________________________
+
+Switch to run P1; rmdir dir1; unlink file1 : not owner _________________________

@@ -16,7 +16,7 @@ void cmd_mkdir(char* pathname)
 {
     if (strlen(pathname) == 0)
     {
-        printf("Enter a directory to create");
+        printf("Enter a directory to create\n");
         return;
     }
     char temp[128];
@@ -32,20 +32,20 @@ void cmd_mkdir(char* pathname)
     u32 pino = getino(dName);
     if (pino == 0) // Check if parent inode exists
     {
-        printf("Error: %s does not exist", dName);
+        printf("Error: %s does not exist\n", dName);
         return;
     }
     MINODE* pmip = iget(pino);
     if (!S_ISDIR(pmip->INODE.i_mode)) // Check if parent is dir
     {
-        printf("Error: %s is not a directory", dName);
+        printf("Error: %s is not a directory\n", dName);
         return;
     }
     
     // Check if bName does not exist in dName dir
     if (search(pmip, bName) != 0)
     {
-        printf("Error: %s already exists", pathname);
+        printf("Error: %s already exists\n", pathname);
         return;
     }
 
@@ -114,7 +114,7 @@ void cmd_creat(char* pathname)
 {
     if (strlen(pathname) == 0)
     {
-        printf("Enter a file to create");
+        printf("Enter a file to create\n");
         return;
     }
     char temp[128];
@@ -130,20 +130,20 @@ void cmd_creat(char* pathname)
     u32 pino = getino(dName);
     if (pino == 0) // Check if parent inode exists
     {
-        printf("Error: %s does not exist", dName);
+        printf("Error: %s does not exist\n", dName);
         return;
     }
     MINODE* pmip = iget(pino);
     if (!S_ISDIR(pmip->INODE.i_mode)) // Check if parent is dir
     {
-        printf("Error: %s is not a directory", dName);
+        printf("Error: %s is not a directory\n", dName);
         return;
     }
     
     // Check if bName does not exist in dName dir
     if (search(pmip, bName) != 0)
     {
-        printf("Error: %s already exists", pathname);
+        printf("Error: %s already exists\n", pathname);
         return;
     }
 

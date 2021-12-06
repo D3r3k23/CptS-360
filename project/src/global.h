@@ -16,7 +16,7 @@ extern char* name[64];  // assume at most 64 components in pathname
 extern int dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
 
-extern char line[128], cmd[64], pathname[128];
+// extern char line[256], cmd[64], pathname1[128], pathname2[128];
 
 extern const char* disk;
 

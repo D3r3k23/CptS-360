@@ -121,7 +121,7 @@ void iput(MINODE *mip)
    *ip = mip->INODE;
 
    put_block(block, buf);
-   midalloc(mip);
+   midalloc(mip); //
 } 
 
 u32 search(MINODE *mip, char *name)

@@ -25,6 +25,16 @@ void cmd_rmdir(char* pathname)
         return;
     }
 
+    for (int i = 0; i < 12; i++)
+    {
+        if (mip->INODE.i_block[i])
+            bdalloc(mip->INODE.i_block[i]);
+    }
+    idalloc(mip->ino);
+
+    mip->dirty = 1;
+    iput(mip);
+
     u32 pino = findino(mip, NULL);
     MINODE* pmip = iget(pino);
 
@@ -39,10 +49,6 @@ void cmd_rmdir(char* pathname)
     pmip->INODE.i_ctime = time(NULL);
     pmip->dirty = 1;
     iput(pmip);
-
-    bdalloc(mip->INODE.i_block[0]);
-    idalloc(mip->ino);
-    iput(mip);
 }
 
 void rm_child(MINODE* pmip, char* name)
@@ -66,8 +72,10 @@ void rm_child(MINODE* pmip, char* name)
 
                 if (strcmp(entry_name, name) == 0)
                 {
+                    LOG("Name: %s found", entry_name);
                     if (cp == buf && cp + dp->rec_len == buf + BLKSIZE) // First & only entry in block
                     {
+                        LOG("First & only entry in block");
                         bdalloc(pmip->INODE.i_block[i]);
                         ip->i_size -= BLKSIZE;
 
@@ -84,24 +92,27 @@ void rm_child(MINODE* pmip, char* name)
                     }
                     else if (cp + dp->rec_len == buf + BLKSIZE) // Last entry in block
                     {
+                        LOG("Last entry in block");
                         prev_dp->rec_len += dp->rec_len;
+                        put_block(ip->i_block[i], buf);
                     }
                     else
                     {
+                        LOG("Not first/last & not first & only");
                         char* temp = buf;
                         DIR* last_dp = (DIR*)temp;
                         while (temp + last_dp->rec_len < buf + BLKSIZE) // Find last entry in block
                         {
                             temp += last_dp->rec_len;
-                            last_dp = (DIR*)cp;
+                            last_dp = (DIR*)temp;
                         }
 
                         last_dp->rec_len += dp->rec_len;
 
                         char* start_ptr = cp + dp->rec_len;
                         size_t size = (buf + BLKSIZE) - start_ptr;
-                        memmove(cp, start_ptr, size);
 
+                        memmove(cp, start_ptr, size);
                         put_block(ip->i_block[i], buf);
                     }
 
@@ -110,7 +121,7 @@ void rm_child(MINODE* pmip, char* name)
                     return;
                 }
 
-                prev_dp = (DIR*)cp;
+                prev_dp = dp;
                 cp += dp->rec_len;
             }
         }

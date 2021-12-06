@@ -40,15 +40,20 @@ int nblocks=0, ninodes=0, bmap, imap=0, iblk=0;
 
 //---------------------//
 
-void init();
+void init(const char* disk);
 void mount_root();
 void cmd_quit();
 
-const char* disk = "diskimage";
-
 int main(int argc, char* argv[])
 {
-    init();  
+    const char* disk;
+    if (argv[1])
+        disk = argv[1];
+    else
+        disk = "diskimage";
+    printf("Using virtual disk: %s\n", disk);
+
+    init(disk);  
     mount_root();
     printf("root refCount = %d\n", root->refCount);
 
@@ -92,10 +97,12 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "cat"))      cmd_cat(pathname1);
         else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
         else if (streq(cmd, "quit"))     cmd_quit();
+        else
+            printf("Unknown command\n");
     }
 }
 
-void init()
+void init(const char* disk)
 {
     LOG("init");
 

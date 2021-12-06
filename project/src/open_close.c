@@ -105,7 +105,7 @@ void truncate(MINODE* mip)
             ip->i_block[i] = 0;
         }
 
-    int nIndirect_blocks = BLKSIZE / sizeof(u32);;
+    u32 nIndirect_blocks = BLKSIZE / sizeof(u32);
     
     // 256 indirect blocks
     if (ip->i_block[12])
@@ -182,6 +182,7 @@ OFT* make_oft(MINODE* mip, F_MODE mode)
     else
         oft->offset = 0;
     
+    LOG("Created OFT: mode=%d offset=%d fsize=%u", oft->mode, oft->offset, oft->mip->INODE.i_size);
     return oft;
 }
 
@@ -196,7 +197,7 @@ int my_close(int fd)
     OFT* oft = running->fd[fd];
     if (!oft)
     {
-        LOG("Error: No OFT exists for FD %D", fd);
+        LOG("Error: No OFT exists for FD %d", fd);
         return -1;
     }
     running->fd[fd] = NULL;
@@ -212,7 +213,7 @@ int my_close(int fd)
     return 0;
 }
 
-int lseek(int fd, u32 position)
+int my_lseek(int fd, u32 position)
 {
     if (fd < 0 || NFD - 1 < fd)
     {
@@ -223,7 +224,7 @@ int lseek(int fd, u32 position)
     OFT* oft = running->fd[fd];
     if (!oft)
     {
-        LOG("Error: No OFT exists for FD %D", fd);
+        LOG("Error: No OFT exists for FD %d", fd);
         return -1;
     }
 

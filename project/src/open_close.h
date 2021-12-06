@@ -9,7 +9,7 @@ OFT* make_oft(MINODE* mip, F_MODE mode);
 
 int my_close(int fd);
 
-int lseek(int fd, u32 position);
+int my_lseek(int fd, u32 position);
 
 void cmd_pfd(void);
 

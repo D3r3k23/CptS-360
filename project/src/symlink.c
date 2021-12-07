@@ -1,5 +1,7 @@
 #include "symlink.h"
 #include "type.h"
+#include "rmdir.h"
+
 
 #include "log.h"
 #include "global.h"
@@ -37,7 +39,7 @@ void cmd_symlink(char * old_file, char* new_file)
 	char *child = basename(new_file);
 	int pino = getino(parent);
 	MINODE *pmip = iget(pino);
-	// rm_child(pmip,ino,child);
+	rm_child(pmip,child);
 	pmip->dirty = 1; //mark new_file parent minode dirty;
 	iput(pmip);
 }

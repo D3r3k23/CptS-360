@@ -440,3 +440,32 @@ int is_empty(MINODE* mip)
 
     return 1;
 }
+
+u32 map(INODE* ip, u32 log_blk)
+{
+    if (log_blk < 12) // Direct block
+    {
+        return ip->i_block[log_blk];
+    }
+    else if (12 <= log_blk && log_blk < 12 + 256) // Indirect blocks
+    {
+        char buf[BLKSIZE];
+        u32* indirect_blk = (u32*)get_block(12, buf);
+
+        return indirect_blk[log_blk - 12];
+    }
+    else  // Double indirect blocks
+    {
+        char buf1[BLKSIZE];
+        u32* dbl_indirect_blk = (u32*)get_block(13, buf1);
+        u32 n_dbl_indirect_blks = BLKSIZE / sizeof(u32);
+
+        u32 log_indirect_blk = log_blk - n_dbl_indirect_blks - 12;
+        u32 indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks];
+
+        char buf2[BLKSIZE];
+        u32* sin_indirect_blk = (u32*)get_block(indirect_blk, buf2);
+        
+        return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
+    }
+}

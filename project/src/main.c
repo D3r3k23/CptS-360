@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
         memset(pathname2, 0, 128);
 
         printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|"
-            "readlink|pfd|cat|cp|save|quit]\n");
+            "readlink|pfd|cat|cp|mv|save|quit]\n");
         printf("Input command: ");
         fgets(line, 128, stdin);
 
@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "pfd"))      cmd_pfd();
         else if (streq(cmd, "cat"))      cmd_cat(pathname1);
         else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
+        else if (streq(cmd, "mv"))       cmd_mv(pathname1, pathname2);
         else if (streq(cmd, "save"))     cmd_save();
         else if (streq(cmd, "quit"))     cmd_quit();
         else

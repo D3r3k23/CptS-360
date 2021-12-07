@@ -2,4 +2,8 @@
 /.vscode/**
 
 /build/**
+
 /diskimage
+/mydisk
+/disk2
+/disk3

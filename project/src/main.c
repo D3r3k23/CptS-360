@@ -10,6 +10,9 @@
 #include "rmdir.h"
 #include "link_unlink.h"
 #include "symlink.h"
+#include "open_close.h"
+#include "read_cat.h"
+#include "write_cp.h"
 
 #include <ext2fs/ext2_fs.h>
 
@@ -37,15 +40,21 @@ int nblocks=0, ninodes=0, bmap, imap=0, iblk=0;
 
 //---------------------//
 
-void init();
-void mount_root();
-void cmd_quit();
-
-const char* disk = "diskimage";
+void init(const char* disk);
+void mount_root(void);
+void cmd_save(void);
+void cmd_quit(void);
 
 int main(int argc, char* argv[])
 {
-    init();  
+    const char* disk;
+    if (argv[1])
+        disk = argv[1];
+    else
+        disk = "diskimage";
+    printf("Using virtual disk: %s\n", disk);
+
+    init(disk);  
     mount_root();
     printf("root refCount = %d\n", root->refCount);
 
@@ -56,9 +65,7 @@ int main(int argc, char* argv[])
     printf("root refCount = %d\n", root->refCount);
 
     // WRTIE code here to create P1 as a USER process
-
-    
-
+    // (Level 3)
 
     char line[256], cmd[64], pathname1[128], pathname2[128];
     
@@ -69,7 +76,8 @@ int main(int argc, char* argv[])
         memset(pathname1, 0, 128);
         memset(pathname2, 0, 128);
 
-        printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|readlink|quit]\n");
+        printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|"
+            "readlink|pfd|cat|cp|save|quit]\n");
         printf("Input command: ");
         fgets(line, 128, stdin);
 
@@ -86,11 +94,17 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "unlink"))   cmd_unlink(pathname1);
         else if (streq(cmd, "symlink"))  cmd_symlink(pathname1, pathname2);
         else if (streq(cmd, "readlink")) cmd_readlink(pathname1);
+        else if (streq(cmd, "pfd"))      cmd_pfd();
+        else if (streq(cmd, "cat"))      cmd_cat(pathname1);
+        else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
+        else if (streq(cmd, "save"))     cmd_save();
         else if (streq(cmd, "quit"))     cmd_quit();
+        else
+            printf("Unknown command\n");
     }
 }
 
-void init()
+void init(const char* disk)
 {
     LOG("init");
 
@@ -139,25 +153,29 @@ void init()
         proc[i].uid = 0;
         proc[i].gid = 0;
         proc[i].cwd = 0;
+        for (int j = 0; j < NFD; j++)
+            proc[i].fd[j] = NULL;
     }
 }
 
 // load root INODE and set root pointer to it
-void mount_root()
+void mount_root(void)
 {  
     LOG("mount_root");
     root = iget(ROOT_INO);
 }
 
-void cmd_quit()
+void cmd_save(void)
 {
-    int i;
-    MINODE *mip;
-    for (i=0; i<NMINODE; i++)
+    for (int i = 0; i < NMINODE; i++)
     {
-        mip = &minode[i];
-        if (mip->refCount > 0)
-            iput(mip);
+        if (minode[i].refCount > 0)
+            iput(&minode[i]);
     }
+}
+
+void cmd_quit(void)
+{
+    cmd_save();
     exit(0);
 }

@@ -1,7 +1,7 @@
 SRC_DIR   := src
 BUILD_DIR := build
 EXE 	  := $(BUILD_DIR)/a.out
-GCC_FLAGS := -g -m32 -MMD -Wall -Wextra -DEN_LOG
+GCC_FLAGS := -g -m32 -MMD -Wall -DEN_LOG
 
 SRCS := $(shell find $(SRC_DIR) -name '*.c')
 OBJS := $(subst $(SRC_DIR), $(BUILD_DIR), $(SRCS:.c=.o))

@@ -9,7 +9,30 @@
 
 int my_write(int fd, char* in_buf, size_t count)
 {
+    OFT* oft = running->fd[fd];
+    if (!oft)
+    {
+        LOG("Error: FD %d is not open", fd);
+        return -1;
+    }
 
+    F_MODE mode = oft->mode;
+    int offset = oft->offset;
+
+    if (mode == RD)
+        return -1;
+    
+    MINODE* mip = oft->mip;
+    INODE* ip = &mip->INODE;
+
+    while (count)
+    {
+        u32 log_blk = oft->offset / BLKSIZE;
+        u32 blk = map(ip, log_blk);
+        size_t start = offset % BLKSIZE;
+
+
+    }
 }
 
 void cmd_cp(char* src, char* dest)

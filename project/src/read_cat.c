@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 
+#include <stdio.h>
 #include <string.h>
 
 int my_read(int fd, char* out_buf, size_t count)
@@ -22,31 +23,29 @@ int my_read(int fd, char* out_buf, size_t count)
     if (mode != RD && mode != RW)
         return -1;
 
-    MINODE* mip = oft->mip;
-    INODE* ip = &mip->INODE;
+    INODE* ip = &oft->mip->INODE;
 
     if (offset >= ip->i_size)
         return -1;
 
-    size_t available = ip->i_size - offset;
-    u32 n = 0;
+    const size_t available = ip->i_size - offset;
+    if (count > available)
+        count = available;
 
-    while (count && available)
+    size_t n = 0;
+    while (count)
     {
-        u32 log_blk = offset / BLKSIZE;
-        u32 start = offset % BLKSIZE;
-        u32 blk = map(ip, log_blk);
+        const u32 log_blk = offset / BLKSIZE;
+        const u32 blk = map(ip, log_blk, 0);
+        const size_t start = offset % BLKSIZE;
 
         char buf[BLKSIZE];
-        get_block(blk, buf);
+        char* cp = get_block(blk, buf) + start;
 
-        char* cp = buf + start;
-        u32 remainder = BLKSIZE - start;
+        const size_t remainder = BLKSIZE - start;
+        const size_t nBytes = min(count, remainder);
 
-        u32 nBytes = min(count, remainder);
-
-        LOG("offset=%d log_blk=%u", offset, log_blk);
-        LOG("Copying %u bytes from blk %u", nBytes, blk);
+        LOG("offset=%d log_blk=%u blk=%u: Copying %u bytes", offset, log_blk, blk, nBytes);
         memcpy(out_buf, cp, nBytes);
         
         out_buf += nBytes;
@@ -54,42 +53,11 @@ int my_read(int fd, char* out_buf, size_t count)
         offset += nBytes;
 
         count -= nBytes;
-        available -= nBytes;
-        for (int i = 0; i < 20000000; i++);
     }
     oft->offset = offset;
 
     LOG("Read %u bytes from FD %d", n, fd);
     return n;
-}
-
-u32 map(INODE* ip, u32 log_blk)
-{
-    if (log_blk < 12) // Direct block
-    {
-        return ip->i_block[log_blk];
-    }
-    else if (12 <= log_blk && log_blk < 12 + 256) // Indirect blocks
-    {
-        char buf[BLKSIZE];
-        u32* indirect_blk = (u32*)get_block(12, buf);
-
-        return indirect_blk[log_blk - 12];
-    }
-    else  // Double indirect blocks
-    {
-        char buf1[BLKSIZE];
-        u32* dbl_indirect_blk = (u32*)get_block(13, buf1);
-        u32 n_dbl_indirect_blks = BLKSIZE / sizeof(u32);
-
-        u32 log_indirect_blk = log_blk - n_dbl_indirect_blks - 12;
-        u32 indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks];
-
-        char buf2[BLKSIZE];
-        u32* sin_indirect_blk = (u32*)get_block(indirect_blk, buf2);
-        
-        return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
-    }
 }
 
 void cmd_cat(char* filename)

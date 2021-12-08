@@ -36,4 +36,6 @@ int max(int a, int b);
 
 int is_empty(MINODE* mip);
 
+u32 map(INODE* ip, u32 log_blk, int do_balloc);
+
 #endif // UTIL_H

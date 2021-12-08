@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 
+#include <stdio.h>
 #include <string.h>
 
 int my_read(int fd, char* out_buf, size_t count)
@@ -35,15 +36,15 @@ int my_read(int fd, char* out_buf, size_t count)
     size_t n = 0;
     while (count)
     {
-        u32 log_blk = offset / BLKSIZE;
-        u32 blk = map(ip, log_blk);
-        size_t start = offset % BLKSIZE;
+        const u32 log_blk = offset / BLKSIZE;
+        const u32 blk = map(ip, log_blk, 0);
+        const size_t start = offset % BLKSIZE;
 
         char buf[BLKSIZE];
         char* cp = get_block(blk, buf) + start;
 
-        size_t remainder = BLKSIZE - start;
-        size_t nBytes = min(count, remainder);
+        const size_t remainder = BLKSIZE - start;
+        const size_t nBytes = min(count, remainder);
 
         LOG("offset=%d log_blk=%u blk=%u: Copying %u bytes", offset, log_blk, blk, nBytes);
         memcpy(out_buf, cp, nBytes);
@@ -51,9 +52,8 @@ int my_read(int fd, char* out_buf, size_t count)
         out_buf += nBytes;
         n += nBytes;
         offset += nBytes;
-        
+
         count -= nBytes;
-        for (int i = 0; i < 20000000; i++);
     }
     oft->offset = offset;
 

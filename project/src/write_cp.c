@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 
+#include <stdio.h>
 #include <string.h>
 
 int my_write(int fd, char* in_buf, size_t count)
@@ -28,10 +29,10 @@ int my_write(int fd, char* in_buf, size_t count)
     while (count)
     {
         u32 log_blk = oft->offset / BLKSIZE;
-        u32 blk = map(ip, log_blk);
+        u32 blk = map(ip, log_blk, 1);
         size_t start = offset % BLKSIZE;
 
-
+        if (ip->i_block[blk]);
     }
 }
 

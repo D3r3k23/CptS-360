@@ -4,6 +4,6 @@
 /build/**
 
 /diskimage
-/mydisk
-/disk2
-/disk3
+/mydisk*
+/disk2*
+/disk3*

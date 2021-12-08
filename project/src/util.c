@@ -440,31 +440,67 @@ int is_empty(MINODE* mip)
     return 1;
 }
 
-u32 map(INODE* ip, u32 log_blk)
+u32 map(INODE* ip, u32 log_blk, int do_balloc)
 {
     if (log_blk < 12) // Direct block
     {
+        if (!ip->i_block[log_blk] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[log_blk] = balloc();
+        }
         return ip->i_block[log_blk];
     }
     else if (12 <= log_blk && log_blk < 12 + 256) // Indirect blocks
     {
+        if (!ip->i_block[12] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[12] = balloc();
+            char zero[BLKSIZE];
+            put_block(ip->i_block[12], zero);
+        }
         char buf[BLKSIZE];
         u32* indirect_blk = (u32*)get_block(ip->i_block[12], buf);
 
+        if (!indirect_blk[log_blk - 12] && do_balloc)
+        {
+            ip->i_blocks++;
+            indirect_blk[log_blk - 12] = balloc();
+        }
         return indirect_blk[log_blk - 12];
     }
-    else  // Double indirect blocks
+    else // Double indirect blocks
     {
+        if (!ip->i_block[13] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[13] = balloc();
+            char zero[BLKSIZE];
+            put_block(ip->i_block[13], zero);
+        }
         char buf1[BLKSIZE];
         u32* dbl_indirect_blk = (u32*)get_block(ip->i_block[13], buf1);
         u32 n_dbl_indirect_blks = BLKSIZE / sizeof(u32);
 
         u32 log_indirect_blk = log_blk - n_dbl_indirect_blks - 12;
         u32 indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks];
+        if (!indirect_blk && do_balloc)
+        {
+            ip->i_blocks++;
+            indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks] = balloc();
+            char zero[BLKSIZE];
+            put_block(indirect_blk, zero);
+        }
 
         char buf2[BLKSIZE];
         u32* sin_indirect_blk = (u32*)get_block(indirect_blk, buf2);
-        
+
+        if (!sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks] && do_balloc)
+        {
+            ip->i_blocks++;
+            sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks] = balloc();
+        }
         return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
     }
 }

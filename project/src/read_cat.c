@@ -23,8 +23,7 @@ int my_read(int fd, char* out_buf, size_t count)
     if (mode != RD && mode != RW)
         return -1;
 
-    MINODE* mip = oft->mip;
-    INODE* ip = &mip->INODE;
+    INODE* ip = &oft->mip->INODE;
 
     if (offset >= ip->i_size)
         return -1;

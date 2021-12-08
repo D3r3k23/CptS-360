@@ -23,17 +23,36 @@ int my_write(int fd, char* in_buf, size_t count)
     if (mode == RD)
         return -1;
     
-    MINODE* mip = oft->mip;
-    INODE* ip = &mip->INODE;
+    INODE* ip = &oft->mip->INODE;
 
+    size_t n = 0;
     while (count)
     {
-        u32 log_blk = oft->offset / BLKSIZE;
-        u32 blk = map(ip, log_blk, 1);
-        size_t start = offset % BLKSIZE;
+        const u32 log_blk = oft->offset / BLKSIZE;
+        const u32 blk = map(ip, log_blk, 1);
+        const size_t start = offset % BLKSIZE;
 
-        if (ip->i_block[blk]);
+        char write_buf[BLKSIZE];
+        char* cp = get_block(blk, write_buf) + start;
+
+        const size_t remainder = BLKSIZE - start;
+        const size_t nBytes = min(count, remainder);
+
+        LOG("offset=%d log_blk=%u blk=%u: Copying %u bytes", offset, log_blk, blk, nBytes);
+        memcpy(cp, in_buf, nBytes);
+        put_block(blk, write_buf);
+
+        in_buf += nBytes;
+        n += nBytes;
+        offset += nBytes;
+        ip->i_size += nBytes;
+
+        count -= nBytes;
     }
+    oft->offset = offset;
+
+    LOG("Wrote %u bytes from FD %d", n, fd);
+    return n;
 }
 
 void cmd_cp(char* src, char* dest)

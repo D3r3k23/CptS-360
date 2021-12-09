@@ -83,19 +83,16 @@ void cmd_unlink(char * filename)
 	mip->INODE.i_links_count--;
 	if(mip->INODE.i_links_count == 0)
 	{
-		//if links_count = 0: remove filename:
-		//remove name entry from parents DIR data block
-		//deallocate all data blocks in INODE;
-		//deallocate INODE;
-		char *parent = dirname(filename);
-		char *child = basename(filename);
-		int pino = getino(parent);
-		MINODE *pmip = iget(pino);
-		rm_child(pmip,child);
-		pmip->dirty = 1;
-		iput(pmip);
 		truncate(mip);
 	}
+	char *parent = dirname(filename);
+	char *child = basename(filename);
+	int pino = getino(parent);
+	MINODE *pmip = iget(pino);
+	rm_child(pmip,child);
+	pmip->dirty = 1;
+	iput(pmip);
+	
 	mip->dirty = 1; //for write INODE back to disk
 	iput(mip); //release mip
 }

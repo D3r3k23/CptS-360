@@ -166,12 +166,12 @@ void creat_impl(MINODE* pmip, char* name)
     ip->i_mode = 0100644;
     ip->i_uid = running->uid;
     ip->i_gid = running->gid;
-    ip->i_size = BLKSIZE;
+    ip->i_size = 0;
     ip->i_links_count = 1;
     ip->i_atime = time(NULL);
     ip->i_ctime = time(NULL);
     ip->i_mtime = time(NULL);
-    ip->i_blocks = 2;
+    ip->i_blocks = 0;
 
     ip->i_block[0] = blk;
     for (int i = 1; i < 15; i++)

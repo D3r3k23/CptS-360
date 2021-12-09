@@ -60,22 +60,18 @@ void cmd_readlink(char *pathname)
 //copy targets filename from INODE.i_block[] into buffer;
 //return file size
 	int ino = getino(pathname);
-		if(!ino) //checks if the inode exists
-		{
-			printf("source path does not exist\n");
-			return;
-		}
-	
-		MINODE *mip = iget(ino);
-	
-		if(!S_ISLNK(mip->INODE.i_mode)) //checks if the inode is a LNK
-		{
-			printf("path is not a LNK\n"); //if the inode is not a LNK file, return
-			return;
-		}
-	
-		printf("%s\n", (char *) (mip->INODE.i_block));
-	
-		iput(mip);
-	
+	if(!ino) //checks if the inode exists
+	{
+		printf("source path does not exist\n");
+		return;
+	}
+	MINODE *mip = iget(ino);
+
+	if(!S_ISLNK(mip->INODE.i_mode)) //checks if the inode is a LNK
+	{
+		printf("path is not a LNK\n"); //if the inode is not a LNK file, return
+		return;
+	}
+	printf("%s\n", (char *) (mip->INODE.i_block));
+	iput(mip);
 }

@@ -4,8 +4,8 @@
 #include "global.h"
 #include "util.h"
 #include "open_close.h"
-
 #include "read_cat.h"
+
 #include <stdio.h>
 #include <string.h>
 

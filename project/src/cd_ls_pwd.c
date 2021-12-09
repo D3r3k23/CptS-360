@@ -116,8 +116,8 @@ void ls_file(MINODE* mip, char* name)
             printf("%c", '-');
     
     printf("%2u ", ip->i_links_count);
-    printf("%2u ", ip->i_gid);
     printf("%2u ", ip->i_uid);
+    printf("%2u ", ip->i_gid);
     printf("%6u ", ip->i_size);
 
     char temp[128];

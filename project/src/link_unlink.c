@@ -6,6 +6,7 @@
 #include "global.h"
 #include "util.h"
 #include "mkdir_creat.h"
+#include "open_close.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +39,16 @@ void cmd_link(char *old_file, char *new_file)
 		if(getino(new_file)==0)
 		{
 		//creat new_file with the same inode number of oldfile:
-			char *parent = dirname(new_file);
-			char *child = basename(new_file);
+			char temp[128];
+			char parent[128];
+			char child[128];
+			
+			strcpy(temp, new_file);
+			strcpy(parent, dirname(temp));
+
+			strcpy(temp, new_file);
+			strcpy(child, basename(temp));
+
 			int pino = getino(parent);
 
 			MINODE *pmip = iget(pino);
@@ -47,6 +56,7 @@ void cmd_link(char *old_file, char *new_file)
 			enter_name(pmip,oino,child,EXT2_FT_REG_FILE);
 			omip->INODE.i_links_count++; //inc INODE's links_count by 1
 			omip->dirty = 1; //for write back by iput(omip)
+			pmip->dirty = 1;
 			iput(omip);
 			iput(pmip);
 		}
@@ -70,40 +80,28 @@ void cmd_unlink(char * filename)
 	if(S_ISDIR(mip->INODE.i_mode))
 	{
 		printf("Error: file cannot be a DIR");
-		iput(mip);
 		return;
 	}
-	else
-	{
-		//remove name entry from parents DIR data block
-		char *parent = dirname(filename);
-		char *child = basename(filename);
-		int pino = getino(parent);
-		MINODE *pmip = iget(pino);
-		rm_child(pmip,child);
-		pmip->dirty = 1;
-		iput(pmip);
-	}
+  if(running->uid != 0 && running->uid != mip->inode.i_uid)
+  {
+    printf("Unlink error: invalid access permissions\n");
+    return;
+  }
 
 	//decrement INODE's link_count by 1
 	mip->INODE.i_links_count--;
-	if(mip->INODE.i_links_count > 0)
+	if(mip->INODE.i_links_count == 0)
 	{
-		mip->dirty = 1; //for write INODE back to disk
+		truncate(mip);
 	}
-	else {
-		//if links_count = 0: remove filename
-		//deallocate all data blocks in INODE;
-		//deallocate INODE;
-		
-		
-	}
-	}
-	else
-	{
-		printf("Unlink error: invalid access permissions");
-	}
+	char *parent = dirname(filename);
+	char *child = basename(filename);
+	int pino = getino(parent);
+	MINODE *pmip = iget(pino);
+	rm_child(pmip,child);
+	pmip->dirty = 1;
+	iput(pmip);
+	
+	mip->dirty = 1; //for write INODE back to disk
 	iput(mip); //release mip
-
-
 }

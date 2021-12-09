@@ -41,6 +41,7 @@ int nblocks=0, ninodes=0, bmap, imap=0, iblk=0;
 
 void init(const char* disk);
 void mount_root(void);
+void cmd_p(char* procName);
 void cmd_save(void);
 void cmd_quit(void);
 
@@ -57,14 +58,20 @@ int main(int argc, char* argv[])
     mount_root();
     printf("root refCount = %d\n", root->refCount);
 
-    printf("creating P0 as running process\n");
-    running = &proc[0];
-    running->status = READY;
-    running->cwd = iget(ROOT_INO);
+    printf("creating P0 as super process\n");
+    proc[0].status = READY;
+    proc[0].cwd = iget(ROOT_INO);
+    proc[0].uid = 0;
     printf("root refCount = %d\n", root->refCount);
 
-    // WRTIE code here to create P1 as a USER process
-    // (Level 3)
+    printf("creating P1 as user process\n");
+    proc[1].status = READY;
+    proc[1].cwd = iget(ROOT_INO);
+    proc[1].uid = 1;
+    printf("root refCount = %d\n", root->refCount);
+
+    running = &proc[0];
+    printf("Running process: P0\n");  
 
     char line[256], cmd[64], pathname1[128], pathname2[128];
     
@@ -76,7 +83,7 @@ int main(int argc, char* argv[])
         memset(pathname2, 0, 128);
 
         printf("[ls|cd|pwd|mkdir|creat|rmdir|link|unlink|symlink|"
-            "readlink|pfd|cat|cp|mv|save|quit]\n");
+            "readlink|pfd|cat|cp|mv|p|save|quit]\n");
         printf("Input command: ");
         fgets(line, 128, stdin);
 
@@ -97,6 +104,7 @@ int main(int argc, char* argv[])
         else if (streq(cmd, "cat"))      cmd_cat(pathname1);
         else if (streq(cmd, "cp"))       cmd_cp(pathname1, pathname2);
         else if (streq(cmd, "mv"))       cmd_mv(pathname1, pathname2);
+        else if (streq(cmd, "p"))        cmd_p(pathname1);
         else if (streq(cmd, "save"))     cmd_save();
         else if (streq(cmd, "quit"))     cmd_quit();
         else
@@ -163,6 +171,18 @@ void mount_root(void)
 {  
     LOG("mount_root");
     root = iget(ROOT_INO);
+}
+
+void cmd_p(char* procName)
+{
+    int pid = strtol(procName, NULL, 10);
+    if (pid < 0 || NPROC <= pid)
+        printf("%s is not a valid process", procName);
+    else
+    {
+        printf("Switching to P%d\n", pid);
+        running = &proc[pid];
+    }
 }
 
 void cmd_save(void)

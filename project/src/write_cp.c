@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 
+#include "read_cat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -57,21 +58,19 @@ int my_write(int fd, char* in_buf, size_t count)
 
 void cmd_cp(char* src, char* dest) //cp copies source to destination
 {
-	int fd;
-	int gd;
-    fd = my_open(src, RD);
-    gd = my_open(dest, WR|CREAT);
-    if (!gd)//destination exists
-    {
-	    cmd_creat(dest);
-	    gd = my_open(dest, WR|CREAT);
-    }
-   
+
+    int fd = my_open(src, 0);
+    int gd = my_open(dest, 1);
+    int n = 0;
+    char buf[BLKSIZE];
     
-    while(n=read(fd, buf[], BLKSIZE))
+    while(n=my_read(fd, buf, BLKSIZE))
     {
-    	write(gd,buf,n);
+    	my_write(gd,buf,n);
     }
+    
+    my_close(fd);
+    my_close(gd);
     
 }
 

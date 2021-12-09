@@ -510,3 +510,31 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
         return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
     }
 }
+
+int check_access(char* filename, u8 mode) // mode = r|w|x
+{
+    if (running->uid == SUPER_USER)
+        return 1;
+
+    // NOT SUPERuser: get file's INODE
+    u32 ino = getino(filename);
+    MINODE *mip = iget(ino);
+
+    int r = 1;
+    if (mip->INODE.i_uid == running->uid)
+    {
+        if (((mode >> 2) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 8)) r = 0;
+        if (((mode >> 1) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 7)) r = 0;
+        if (((mode >> 0) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 6)) r = 0;
+    }
+    else
+    {
+        if (((mode >> 2) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 2)) r = 0;
+        if (((mode >> 1) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 1)) r = 0;
+        if (((mode >> 0) & 1) && !tst_bit((char*)&mip->INODE.i_mode, 0)) r = 0;
+    }
+
+    iput(mip);
+    
+    return r != 0;
+}

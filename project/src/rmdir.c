@@ -1,6 +1,7 @@
 #include "rmdir.h"
 
 #include "log.h"
+#include "global.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -9,51 +10,53 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
-
 void cmd_rmdir(char* pathname)
 {
     u32 ino = getino(pathname);
     MINODE* mip = iget(ino);
-    if(access(pathname,mip->INODE.i_mode))
+
+    if (!S_ISDIR(mip->INODE.i_mode))
     {
-    	    if (!S_ISDIR(mip->INODE.i_mode))
-	    {
-		printf("Error: %s is not a directory\n", pathname);
-		return;
-	    }
-
-	    if (!is_empty(mip))
-	    {
-		printf("Error: %s is not empty\n", pathname);
-		return;
-	    }
-
-	    for (int i = 0; i < 12; i++)
-	    {
-		if (mip->INODE.i_block[i])
-		    bdalloc(mip->INODE.i_block[i]);
-	    }
-	    idalloc(mip->ino);
-
-	    mip->dirty = 1;
-	    iput(mip);
-
-	    u32 pino = findino(mip, NULL);
-	    MINODE* pmip = iget(pino);
-
-	    char temp[256];
-	    strcpy(temp, pathname);
-	    char* name = basename(temp);
-
-	    rm_child(pmip, name);
-
-	    pmip->INODE.i_links_count--;
-	    pmip->INODE.i_atime = time(NULL);
-	    pmip->INODE.i_ctime = time(NULL);
-	    pmip->dirty = 1;
-	    iput(pmip);
+        printf("Error: %s is not a directory\n", pathname);
+        return;
     }
 
+	if (running->uid != SUPER_USER && running->uid != mip->INODE.i_uid)
+	{
+		printf("Unlink error: invalid access permissions\n");
+		return;
+	}
+
+    if (!is_empty(mip))
+    {
+        printf("Error: %s is not empty\n", pathname);
+        return;
+    }
+
+    for (int i = 0; i < 12; i++)
+    {
+        if (mip->INODE.i_block[i])
+            bdalloc(mip->INODE.i_block[i]);
+    }
+    idalloc(mip->ino);
+
+    mip->dirty = 1;
+    iput(mip);
+
+    u32 pino = findino(mip, NULL);
+    MINODE* pmip = iget(pino);
+
+    char temp[256];
+    strcpy(temp, pathname);
+    char* name = basename(temp);
+
+    rm_child(pmip, name);
+
+    pmip->INODE.i_links_count--;
+    pmip->INODE.i_atime = time(NULL);
+    pmip->INODE.i_ctime = time(NULL);
+    pmip->dirty = 1;
+    iput(pmip);
 }
 
 void rm_child(MINODE* pmip, char* name)

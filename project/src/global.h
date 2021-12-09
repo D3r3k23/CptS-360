@@ -19,4 +19,6 @@ extern int nblocks, ninodes, bmap, imap, iblk;
 #define SUPER_INO 1
 #define ROOT_INO 2
 
+#define SUPER_USER 0
+
 #endif // GLOBAL_H

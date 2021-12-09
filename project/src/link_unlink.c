@@ -73,20 +73,17 @@ void cmd_unlink(char * filename)
 	}
 	MINODE *mip = iget(ino);
 	
-	if(access(filename,mip->INODE.i_mode))
-	{
-	
 	//check its a REG or symbolic LNK file; cannot be a DIR
 	if(S_ISDIR(mip->INODE.i_mode))
 	{
-		printf("Error: file cannot be a DIR");
+		printf("Error: file cannot be a DIR\n");
 		return;
 	}
-  if(running->uid != 0 && running->uid != mip->inode.i_uid)
-  {
-    printf("Unlink error: invalid access permissions\n");
-    return;
-  }
+	if(running->uid != SUPER_USER && running->uid != mip->INODE.i_uid)
+	{
+		printf("Unlink error: invalid access permissions\n");
+		return;
+	}
 
 	//decrement INODE's link_count by 1
 	mip->INODE.i_links_count--;

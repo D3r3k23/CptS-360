@@ -55,8 +55,23 @@ int my_write(int fd, char* in_buf, size_t count)
     return n;
 }
 
-void cmd_cp(char* src, char* dest)
+void cmd_cp(char* src, char* dest) //cp copies source to destination
 {
+	int fd;
+	int gd;
+    fd = my_open(src, RD);
+    gd = my_open(dest, WR|CREAT);
+    if (!gd)//destination exists
+    {
+	    cmd_creat(dest);
+	    gd = my_open(dest, WR|CREAT);
+    }
+   
+    
+    while(n=read(fd, buf[], BLKSIZE))
+    {
+    	write(gd,buf,n);
+    }
     
 }
 

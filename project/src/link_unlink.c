@@ -1,5 +1,6 @@
 #include "link_unlink.h"
 #include "type.h"
+#include "rmdir.h"
 
 #include "log.h"
 #include "global.h"
@@ -75,7 +76,7 @@ void cmd_unlink(char * filename)
 		char *child = basename(filename);
 		int pino = getino(parent);
 		MINODE *pmip = iget(pino);
-		// rm_child(pmip,ino,child);
+		rm_child(pmip,child);
 		pmip->dirty = 1;
 		iput(pmip);
 	}

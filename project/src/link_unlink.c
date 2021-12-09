@@ -6,6 +6,7 @@
 #include "global.h"
 #include "util.h"
 #include "mkdir_creat.h"
+#include "open_close.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +39,16 @@ void cmd_link(char *old_file, char *new_file)
 		if(getino(new_file)==0)
 		{
 		//creat new_file with the same inode number of oldfile:
-			char *parent = dirname(new_file);
-			char *child = basename(new_file);
+			char temp[128];
+			char parent[128];
+			char child[128];
+			
+			strcpy(temp, new_file);
+			strcpy(parent, dirname(temp));
+
+			strcpy(temp, new_file);
+			strcpy(child, basename(temp));
+
 			int pino = getino(parent);
 
 			MINODE *pmip = iget(pino);
@@ -47,6 +56,7 @@ void cmd_link(char *old_file, char *new_file)
 			enter_name(pmip,oino,child,EXT2_FT_REG_FILE);
 			omip->INODE.i_links_count++; //inc INODE's links_count by 1
 			omip->dirty = 1; //for write back by iput(omip)
+			pmip->dirty = 1;
 			iput(omip);
 			iput(pmip);
 		}
@@ -66,12 +76,17 @@ void cmd_unlink(char * filename)
 	if(S_ISDIR(mip->INODE.i_mode))
 	{
 		printf("Error: file cannot be a DIR");
-		iput(mip);
 		return;
 	}
-	else
+
+	//decrement INODE's link_count by 1
+	mip->INODE.i_links_count--;
+	if(mip->INODE.i_links_count == 0)
 	{
+		//if links_count = 0: remove filename:
 		//remove name entry from parents DIR data block
+		//deallocate all data blocks in INODE;
+		//deallocate INODE;
 		char *parent = dirname(filename);
 		char *child = basename(filename);
 		int pino = getino(parent);
@@ -79,22 +94,8 @@ void cmd_unlink(char * filename)
 		rm_child(pmip,child);
 		pmip->dirty = 1;
 		iput(pmip);
+		truncate(mip);
 	}
-
-	//decrement INODE's link_count by 1
-	mip->INODE.i_links_count--;
-	if(mip->INODE.i_links_count > 0)
-	{
-		mip->dirty = 1; //for write INODE back to disk
-	}
-	else {
-		//if links_count = 0: remove filename
-		//deallocate all data blocks in INODE;
-		//deallocate INODE;
-		
-		
-	}
+	mip->dirty = 1; //for write INODE back to disk
 	iput(mip); //release mip
-
-
 }

@@ -10,19 +10,48 @@
 #include <libgen.h>
 #include <sys/stat.h>
 
+int access(char *filename, char mode)  // mode = r|w|x:
+{
+  int r;
+
+  if (running->uid == 0)   // superuser process
+     return 1;
+
+  // NOT SUPERuser: get file's INODE
+  u32 ino = getino(filename);
+  MINODE *mip = iget(ino);
+
+  if (mip->INODE.i_uid == running->uid)
+    r = tst_bit(mode, 8);//(check owner's rwx with mode);  // by tst_bit()
+  else
+    r = tst_bit(mode, 0);//(check other's rwx with mode);  // by tst_bit()
+
+  iput(mip);
+  
+  return r;
+}
+
 void cmd_cd(char* pathname)
 {
+
     int ino = getino(pathname);//returns error if ino = 0 
     MINODE *mip = iget(ino);
-    if(S_ISDIR(mip->INODE.i_mode)) //check if dir
+    if(access(pathname, mip->INODE.i_mode))
     {
-        iput(running->cwd);
-        running->cwd = mip;
-    }
-    else
-    {
-        printf("cd error: not a valid directory");
-    }
+	    if(S_ISDIR(mip->INODE.i_mode)) //check if dir
+	    {
+		iput(running->cwd);
+		running->cwd = mip;
+	    }
+	    else
+	    {
+		printf("cd error: not a valid directory");
+	    }
+	}
+	else
+	{
+	printf("cd error: invalid access permissions");
+	}
 }
 
 void cmd_ls(char* pathname)

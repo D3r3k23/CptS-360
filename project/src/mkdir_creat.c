@@ -128,7 +128,7 @@ void cmd_creat(char* pathname)
     strcpy(bName, basename(temp));
 
     u32 pino = getino(dName);
-    if (pino == 0) // Check if parent inode exists
+    if (!pino) // Check if parent inode exists
     {
         printf("Error: %s does not exist\n", dName);
         return;
@@ -201,10 +201,10 @@ void enter_name(MINODE* pmip, u32 ino, char* name, int file_type)
         {
             LOG("Entry: %s", dp->name);
             cp += dp->rec_len;
-            dp = (DIR*)cp;            
+            dp = (DIR*)cp;
         }
 
-        int ideal_length = 4 * ((8 + strlen(name) + 3) / 4);
+        int ideal_length = 4 * ((8 + dp->name_len + 3) / 4);
         int remaining = dp->rec_len - ideal_length;
 
         if (name_ideal_length < remaining)

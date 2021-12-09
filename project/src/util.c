@@ -121,7 +121,6 @@ void iput(MINODE *mip)
    *ip = mip->INODE;
 
    put_block(block, buf);
-   midalloc(mip); //
 } 
 
 u32 search(MINODE *mip, char *name)
@@ -130,7 +129,7 @@ u32 search(MINODE *mip, char *name)
     DIR *dp;
     INODE *ip;
 
-    printf("search for %s in MINODE = [%d, %d]\n", name, mip->dev, mip->ino);
+    LOG("search for %s in MINODE = [%d, %d]", name, mip->dev, mip->ino);
     ip = &(mip->INODE);
 
     /*** search for name in mip's data blocks: ASSUME i_block[0] ONLY ***/
@@ -138,13 +137,13 @@ u32 search(MINODE *mip, char *name)
     get_block(ip->i_block[0], sbuf);
     dp = (DIR *)sbuf;
     cp = sbuf;
-    printf("  ino   rlen  nlen  name\n");
+    LOG("  ino   rlen  nlen  name");
 
     while (cp < sbuf + BLKSIZE)
     {
         strncpy(temp, dp->name, dp->name_len);
         temp[dp->name_len] = 0;
-        printf("%4d  %4d  %4d    %s\n", dp->inode, dp->rec_len, dp->name_len, dp->name);
+        LOG("%4d  %4d  %4d    %s", dp->inode, dp->rec_len, dp->name_len, dp->name);
         if (strcmp(temp, name) == 0)
         {
             LOG("found %s : ino = %d", temp, dp->inode);
@@ -160,7 +159,7 @@ u32 getino(char *pathname)
 {
     MINODE *mip;
 
-    printf("getino: pathname=%s\n", pathname);
+    LOG("pathname=%s", pathname);
     if (strcmp(pathname, "/") == 0)
         return ROOT_INO;
 
@@ -176,8 +175,7 @@ u32 getino(char *pathname)
     int ino;
     for (int i = 0; i < n; i++)
     {
-        printf("===========================================\n");
-        printf("getino: i=%d name[%d]=%s\n", i, i, name[i]);
+        LOG("i=%d name[%d]=%s", i, i, name[i]);
 
         ino = search(mip, name[i]);
 
@@ -328,7 +326,7 @@ int balloc(void)
             dec_free_blocks();
             u32 blk = i + 1;
             LOG("Allocated block %d", blk);
-            return i + 1;
+            return blk;
         }
     }
     LOG("Error: No free blocks");
@@ -376,7 +374,7 @@ void bdalloc(int blk)
 
 int tokenize(char *pathname)
 {
-    printf("tokenize %s\n", pathname);
+    LOG("pathname: %s", pathname);
 
     strcpy(gpath, pathname); // tokens are in global gpath[ ]
     int n = 0;
@@ -387,11 +385,11 @@ int tokenize(char *pathname)
         n++;
         s = strtok(NULL, "/");
     }
-    name[n] = 0;
+    name[n] = '\0';
 
     for (int i = 0; i < n; i++)
-        printf("%s  ", name[i]);
-    printf("\n");
+        LOG("%s", name[i]);
+
     return n;
 }
 
@@ -440,4 +438,69 @@ int is_empty(MINODE* mip)
             }
 
     return 1;
+}
+
+u32 map(INODE* ip, u32 log_blk, int do_balloc)
+{
+    if (log_blk < 12) // Direct block
+    {
+        if (!ip->i_block[log_blk] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[log_blk] = balloc();
+        }
+        return ip->i_block[log_blk];
+    }
+    else if (12 <= log_blk && log_blk < 12 + 256) // Indirect blocks
+    {
+        if (!ip->i_block[12] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[12] = balloc();
+            char zero[BLKSIZE];
+            put_block(ip->i_block[12], zero);
+        }
+        char buf[BLKSIZE];
+        u32* indirect_blk = (u32*)get_block(ip->i_block[12], buf);
+
+        if (!indirect_blk[log_blk - 12] && do_balloc)
+        {
+            ip->i_blocks++;
+            indirect_blk[log_blk - 12] = balloc();
+        }
+        return indirect_blk[log_blk - 12];
+    }
+    else // Double indirect blocks
+    {
+        if (!ip->i_block[13] && do_balloc)
+        {
+            ip->i_blocks++;
+            ip->i_block[13] = balloc();
+            char zero[BLKSIZE];
+            put_block(ip->i_block[13], zero);
+        }
+        char buf1[BLKSIZE];
+        u32* dbl_indirect_blk = (u32*)get_block(ip->i_block[13], buf1);
+        u32 n_dbl_indirect_blks = BLKSIZE / sizeof(u32);
+
+        u32 log_indirect_blk = log_blk - n_dbl_indirect_blks - 12;
+        u32 indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks];
+        if (!indirect_blk && do_balloc)
+        {
+            ip->i_blocks++;
+            indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks] = balloc();
+            char zero[BLKSIZE];
+            put_block(indirect_blk, zero);
+        }
+
+        char buf2[BLKSIZE];
+        u32* sin_indirect_blk = (u32*)get_block(indirect_blk, buf2);
+
+        if (!sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks] && do_balloc)
+        {
+            ip->i_blocks++;
+            sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks] = balloc();
+        }
+        return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
+    }
 }

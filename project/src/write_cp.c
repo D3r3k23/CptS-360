@@ -64,7 +64,7 @@ void cmd_cp(char* src, char* dest) //cp copies source to destination
     int n = 0;
     char buf[BLKSIZE];
     
-    while(n=my_read(fd, buf, BLKSIZE))
+    while((n=my_read(fd, buf, BLKSIZE)) >= 0)
     {
     	my_write(gd,buf,n);
     }

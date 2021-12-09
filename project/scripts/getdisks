@@ -1,3 +1,4 @@
+rm mydisk disk2 disk3
 wget https://eecs.wsu.edu/~cs360/samples/PROJECT/mydisk
 wget https://eecs.wsu.edu/~cs360/samples/PROJECT/disk2
 wget https://eecs.wsu.edu/~cs360/samples/PROJECT/disk3

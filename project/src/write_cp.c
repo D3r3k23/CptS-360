@@ -60,7 +60,15 @@ void cmd_cp(char* src, char* dest) //cp copies source to destination
 {
 
     int fd = my_open(src, 0);
+    if(fd == -1)
+    {
+    	return;
+    }
     int gd = my_open(dest, 1);
+    if(gd == -1)
+    {
+    	return;
+    }
     int n = 0;
     char buf[BLKSIZE];
     

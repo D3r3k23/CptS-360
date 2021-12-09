@@ -93,7 +93,7 @@ EXAMPLE: how to mkdir?
 
                 This will be YOUR DEMO record.
 
-NAME__Henderson__ ID__11537179__  NAME_______________ ID______________
+NAME__Henderson__ ID__11537179__  NAME__Xie__ ID__11615135__
 
 0. Do EECS online course evaluation. 
 1. Fill in NAMEs, IDs. Return to TA before 12-8-2021.

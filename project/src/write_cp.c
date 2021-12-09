@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 
+#include "read_cat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -55,8 +56,29 @@ int my_write(int fd, char* in_buf, size_t count)
     return n;
 }
 
-void cmd_cp(char* src, char* dest)
+void cmd_cp(char* src, char* dest) //cp copies source to destination
 {
+
+    int fd = my_open(src, 0);
+    if(fd == -1)
+    {
+    	return;
+    }
+    int gd = my_open(dest, 1);
+    if(gd == -1)
+    {
+    	return;
+    }
+    int n = 0;
+    char buf[BLKSIZE];
+    
+    while((n=my_read(fd, buf, BLKSIZE)) >= 0)
+    {
+    	my_write(gd,buf,n);
+    }
+    
+    my_close(fd);
+    my_close(gd);
     
 }
 

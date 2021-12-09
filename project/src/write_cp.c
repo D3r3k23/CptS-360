@@ -5,6 +5,7 @@
 #include "util.h"
 #include "open_close.h"
 #include "read_cat.h"
+#include "link_unlink.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -92,12 +93,12 @@ void cmd_mv(char* src, char* dest)
 
     if (src_mip->dev == dest_mip->dev)
     {
-        cmd_link(dest,src);
+        cmd_link(src, dest);
         cmd_unlink(src);
     }
     else
     {
-        cmd_cp(src,dest);
+        cmd_cp(src, dest);
         cmd_unlink(src);
     }
 }

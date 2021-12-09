@@ -92,10 +92,12 @@ void cmd_mv(char* src, char* dest)
 
     if (src_mip->dev == dest_mip->dev)
     {
-        
+        cmd_link(dest,src);
+        cmd_unlink(src);
     }
     else
     {
-        // Level 3
+        cmd_cp(src,dest);
+        cmd_unlink(src);
     }
 }

@@ -458,6 +458,7 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
             ip->i_blocks++;
             ip->i_block[12] = balloc();
             char zero[BLKSIZE];
+            memset(zero, 0, BLKSIZE);
             put_block(ip->i_block[12], zero);
         }
         char buf[BLKSIZE];
@@ -467,6 +468,7 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
         {
             ip->i_blocks++;
             indirect_blk[log_blk - 12] = balloc();
+            put_block(ip->i_block[12], buf);
         }
         return indirect_blk[log_blk - 12];
     }
@@ -477,6 +479,7 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
             ip->i_blocks++;
             ip->i_block[13] = balloc();
             char zero[BLKSIZE];
+            memset(zero, 0, BLKSIZE);
             put_block(ip->i_block[13], zero);
         }
         char buf1[BLKSIZE];
@@ -489,7 +492,9 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
         {
             ip->i_blocks++;
             indirect_blk = dbl_indirect_blk[log_indirect_blk / n_dbl_indirect_blks] = balloc();
+            put_block(ip->i_block[13], buf1);
             char zero[BLKSIZE];
+            memset(zero, 0, BLKSIZE);
             put_block(indirect_blk, zero);
         }
 
@@ -500,6 +505,7 @@ u32 map(INODE* ip, u32 log_blk, int do_balloc)
         {
             ip->i_blocks++;
             sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks] = balloc();
+            put_block(indirect_blk, buf2);
         }
         return sin_indirect_blk[log_indirect_blk % n_dbl_indirect_blks];
     }

@@ -33,15 +33,15 @@ int my_write(int fd, char* in_buf, size_t count)
         const u32 blk = map(ip, log_blk, 1);
         const size_t start = offset % BLKSIZE;
 
-        char write_buf[BLKSIZE];
-        char* cp = get_block(blk, write_buf) + start;
+        char buf[BLKSIZE];
+        char* cp = get_block(blk, buf) + start;
 
         const size_t remainder = BLKSIZE - start;
         const size_t nBytes = min(count, remainder);
 
         LOG("offset=%d log_blk=%u blk=%u: Copying %u bytes", offset, log_blk, blk, nBytes);
         memcpy(cp, in_buf, nBytes);
-        put_block(blk, write_buf);
+        put_block(blk, buf);
 
         in_buf += nBytes;
         n += nBytes;
@@ -52,19 +52,19 @@ int my_write(int fd, char* in_buf, size_t count)
     }
     oft->offset = offset;
 
-    LOG("Wrote %u bytes from FD %d", n, fd);
+    LOG("Wrote %u bytes to FD %d", n, fd);
     return n;
 }
 
 void cmd_cp(char* src, char* dest) //cp copies source to destination
 {
 
-    int fd = my_open(src, 0);
+    int fd = my_open(src, RD);
     if(fd == -1)
     {
     	return;
     }
-    int gd = my_open(dest, 1);
+    int gd = my_open(dest, WR);
     if(gd == -1)
     {
     	return;
